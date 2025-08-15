@@ -109,7 +109,7 @@ public class CoordinateSystems {
         List<Shape> triangles = new ArrayList<>();
 
         float[] verticesTriangle1 = {
-                -0.25f, -0.25f, 0.0f, 1f, 0f, 0f,
+                -0.25f, -0.25f, -0.25f, 1f, 0f, 0f,
                 0.25f, -0.25f, 0.0f, 0f, 1f, 0f,
                 0.0f,  0.25f, 0.0f, 0f, 0f, 1f
         };

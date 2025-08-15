@@ -66,9 +66,6 @@ public class Camera {
             angleHorizontal += offsetHorizontal;
             angleVertical += offsetVertical;
 
-            if (angleVertical > 89.0f) angleVertical = 89.0f;
-            if (angleVertical < -89.0f) angleVertical = -89.0f;
-
             updateCameraVectors();
         } else {
             Vector3f dir = new Vector3f(position).sub(cible);
