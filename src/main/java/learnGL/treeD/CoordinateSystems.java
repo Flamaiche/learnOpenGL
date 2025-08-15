@@ -93,7 +93,7 @@ public class CoordinateSystems {
 
     private void loop() throws IOException {
         GL.createCapabilities();
-        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST); // nécessaire pour la 3D
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         Shader shader = new Shader(
@@ -102,12 +102,12 @@ public class CoordinateSystems {
         );
 
         // Camera et commandes
-        Camera camera = new Camera(new org.joml.Vector3f(0,0,3));
+        Camera camera = new Camera(new org.joml.Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
+        // Triangles
         List<Shape> triangles = new ArrayList<>();
 
-        // Triangle 1
         float[] verticesTriangle1 = {
                 -0.25f, -0.25f, 0.0f, 1f, 0f, 0f,
                 0.25f, -0.25f, 0.0f, 0f, 1f, 0f,
@@ -117,7 +117,6 @@ public class CoordinateSystems {
         triangle1.setShader(shader);
         triangles.add(triangle1);
 
-        // Triangle 2
         float[] verticesTriangle2 = {
                 0.3f, -0.2f, 0.0f, 1f, 1f, 0f,
                 0.6f, -0.2f, 0.0f, 0f, 1f, 1f,
@@ -127,7 +126,6 @@ public class CoordinateSystems {
         triangle2.setShader(shader);
         triangles.add(triangle2);
 
-        // Triangle 3
         float[] verticesTriangle3 = {
                 -1.5f, -0.5f, 0.0f, 0.5f, 0.2f, 0.7f,
                 -0.5f, -0.5f, 0.0f, 0.2f, 0.8f, 0.3f,
@@ -139,12 +137,12 @@ public class CoordinateSystems {
 
         // Matrice de projection
         org.joml.Matrix4f projection = new org.joml.Matrix4f()
-                .perspective((float)Math.toRadians(45.0f), (float)width / height, 0.1f, 100.0f);
+                .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Mise à jour de la caméra avec les touches
+            // Mise à jour de la caméra avec touches et rotation
             cmd.update();
 
             // Activation du shader
@@ -156,7 +154,7 @@ public class CoordinateSystems {
 
             // Rendu de tous les triangles
             for (Shape s : triangles) {
-                Matrix4f model = new Matrix4f().identity(); // ou une transformation pour chaque triangle
+                org.joml.Matrix4f model = new org.joml.Matrix4f().identity(); // ou transformation spécifique
                 shader.setUniformMat4f("model", model);
                 s.render();
             }
@@ -172,6 +170,7 @@ public class CoordinateSystems {
             s.cleanup();
         }
     }
+
 
 
     public static void main(String[] args) throws IOException {
