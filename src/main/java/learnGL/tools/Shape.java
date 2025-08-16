@@ -4,7 +4,6 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
@@ -19,11 +18,7 @@ public class Shape {
     private static final int FLOAT_SIZE_BYTES = 4;
 
     private Shader shader = null;
-    private Texture texture = null;
-    // Transformation CPU
-    private Vector3f position = new Vector3f(0, 0, 0);
-    private Vector3f rotation = new Vector3f(0, 0, 0); // rotation en radians
-    private Vector3f scale = new Vector3f(1, 1, 1);
+    private Texture texture = null;  // Texture associée
 
     public Shape(float[] vertices) {
         this.vertexCount = vertices.length / FLOATS_PER_VERTEX;
@@ -86,16 +81,12 @@ public class Shape {
     }
 
     public void render() {
-        if (shader != null) {
-            shader.setUniformMat4f("model", getModelMatrix());
-        }
-
         if (texture != null) texture.bind();
 
         glBindVertexArray(vaoId);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(0); // position
+        glEnableVertexAttribArray(1); // couleur
+        glEnableVertexAttribArray(2); // texture coord
 
         glDrawArrays(drawMode, 0, vertexCount);
 
@@ -106,7 +97,6 @@ public class Shape {
 
         if (texture != null) texture.unbind();
     }
-
 
     public void cleanup() {
         glDisableVertexAttribArray(0);
@@ -197,145 +187,129 @@ public class Shape {
         return verticesFullSlot;
     }
 
-    public boolean estEnCollision(Shape autre) {
-        Vector3f[][] triangles1 = obtenirTriangles();
-        Vector3f[][] triangles2 = autre.obtenirTriangles();
+    // Retourne la position d’un vertex sous forme de Vector3f
+    private Vector3f getVertexPos(int index) {
+        return new Vector3f(
+                vertices[index * FLOATS_PER_VERTEX],
+                vertices[index * FLOATS_PER_VERTEX + 1],
+                vertices[index * FLOATS_PER_VERTEX + 2]
+        );
+    }
 
-        for (Vector3f[] t1 : triangles1) {
-            for (Vector3f[] t2 : triangles2) {
-                if (triangleIntersecte(t1, t2)) {
+    // Test triangle-triangle exact (Möller)
+    private boolean triTriIntersect(Vector3f V0, Vector3f V1, Vector3f V2,
+                                    Vector3f U0, Vector3f U1, Vector3f U2) {
+        Vector3f E1 = new Vector3f(V1).sub(V0);
+        Vector3f E2 = new Vector3f(V2).sub(V0);
+        Vector3f N1 = new Vector3f(E1).cross(E2);
+
+        Vector3f F1 = new Vector3f(U1).sub(U0);
+        Vector3f F2 = new Vector3f(U2).sub(U0);
+        Vector3f N2 = new Vector3f(F1).cross(F2);
+
+        if (N1.length() == 0 || N2.length() == 0) return false;
+
+        float du0 = N1.dot(new Vector3f(U0).sub(V0));
+        float du1 = N1.dot(new Vector3f(U1).sub(V0));
+        float du2 = N1.dot(new Vector3f(U2).sub(V0));
+
+        float dv0 = N2.dot(new Vector3f(V0).sub(U0));
+        float dv1 = N2.dot(new Vector3f(V1).sub(U0));
+        float dv2 = N2.dot(new Vector3f(V2).sub(U0));
+
+        float EPSILON = 1e-6f;
+        if (Math.abs(du0) < EPSILON) du0 = 0;
+        if (Math.abs(du1) < EPSILON) du1 = 0;
+        if (Math.abs(du2) < EPSILON) du2 = 0;
+        if (Math.abs(dv0) < EPSILON) dv0 = 0;
+        if (Math.abs(dv1) < EPSILON) dv1 = 0;
+        if (Math.abs(dv2) < EPSILON) dv2 = 0;
+
+        if (du0 * du1 > 0 && du0 * du2 > 0) return false;
+        if (dv0 * dv1 > 0 && dv0 * dv2 > 0) return false;
+
+        Vector3f D = new Vector3f(N1).cross(N2);
+        int max = 0;
+        float absX = Math.abs(D.x), absY = Math.abs(D.y), absZ = Math.abs(D.z);
+        if (absY > absX) max = 1;
+        if (absZ > ((max == 0) ? absX : absY)) max = 2;
+
+        float[] tri1 = projectOnAxis(max, V0, V1, V2);
+        float[] tri2 = projectOnAxis(max, U0, U1, U2);
+
+        return intervalsOverlap(tri1[0], tri1[1], tri2[0], tri2[1]);
+    }
+
+    private float[] projectOnAxis(int axis, Vector3f v0, Vector3f v1, Vector3f v2) {
+        float p0 = (axis == 0) ? v0.x : (axis == 1 ? v0.y : v0.z);
+        float p1 = (axis == 0) ? v1.x : (axis == 1 ? v1.y : v1.z);
+        float p2 = (axis == 0) ? v2.x : (axis == 1 ? v2.y : v2.z);
+        float min = Math.min(p0, Math.min(p1, p2));
+        float max = Math.max(p0, Math.max(p1, p2));
+        return new float[]{min, max};
+    }
+
+    private boolean intervalsOverlap(float min1, float max1, float min2, float max2) {
+        return !(max1 < min2 || max2 < min1);
+    }
+
+    // Test collision entre deux shapes
+    public boolean intersectsOptimized(Shape other) {
+        // Bounding box rapide pour early out
+        float[] minA = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] maxA = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        float[] minB = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] maxB = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+
+        for (int i = 0; i < vertexCount; i++) {
+            for (int j = 0; j < 3; j++) {
+                float v = vertices[i * FLOATS_PER_VERTEX + j];
+                minA[j] = Math.min(minA[j], v);
+                maxA[j] = Math.max(maxA[j], v);
+            }
+        }
+
+        int otherVertexCount = other.vertices.length / FLOATS_PER_VERTEX;
+        for (int i = 0; i < otherVertexCount; i++) {
+            for (int j = 0; j < 3; j++) {
+                float v = other.vertices[i * FLOATS_PER_VERTEX + j];
+                minB[j] = Math.min(minB[j], v);
+                maxB[j] = Math.max(maxB[j], v);
+            }
+        }
+
+        // Si les boxes ne se touchent pas, pas besoin de test triangle
+        if (maxA[0] < minB[0] || minA[0] > maxB[0] ||
+                maxA[1] < minB[1] || minA[1] > maxB[1] ||
+                maxA[2] < minB[2] || minA[2] > maxB[2]) {
+            return false;
+        }
+
+        // Test triangle par triangle
+        for (int i = 0; i < vertexCount; i += 3) {
+            float[] t1v0 = {vertices[i * FLOATS_PER_VERTEX], vertices[i * FLOATS_PER_VERTEX + 1], vertices[i * FLOATS_PER_VERTEX + 2]};
+            float[] t1v1 = {vertices[(i+1) * FLOATS_PER_VERTEX], vertices[(i+1) * FLOATS_PER_VERTEX + 1], vertices[(i+1) * FLOATS_PER_VERTEX + 2]};
+            float[] t1v2 = {vertices[(i+2) * FLOATS_PER_VERTEX], vertices[(i+2) * FLOATS_PER_VERTEX + 1], vertices[(i+2) * FLOATS_PER_VERTEX + 2]};
+
+            for (int j = 0; j < otherVertexCount; j += 3) {
+                float[] t2v0 = {other.vertices[j * FLOATS_PER_VERTEX], other.vertices[j * FLOATS_PER_VERTEX + 1], other.vertices[j * FLOATS_PER_VERTEX + 2]};
+                float[] t2v1 = {other.vertices[(j+1) * FLOATS_PER_VERTEX], other.vertices[(j+1) * FLOATS_PER_VERTEX + 1], other.vertices[(j+1) * FLOATS_PER_VERTEX + 2]};
+                float[] t2v2 = {other.vertices[(j+2) * FLOATS_PER_VERTEX], other.vertices[(j+2) * FLOATS_PER_VERTEX + 1], other.vertices[(j+2) * FLOATS_PER_VERTEX + 2]};
+
+                if (triTriIntersect(
+                        new Vector3f(t1v0[0], t1v0[1], t1v0[2]),
+                        new Vector3f(t1v1[0], t1v1[1], t1v1[2]),
+                        new Vector3f(t1v2[0], t1v2[1], t1v2[2]),
+                        new Vector3f(t2v0[0], t2v0[1], t2v0[2]),
+                        new Vector3f(t2v1[0], t2v1[1], t2v1[2]),
+                        new Vector3f(t2v2[0], t2v2[1], t2v2[2])
+                )) {
                     return true;
                 }
             }
         }
+
         return false;
     }
 
-    private Vector3f[][] obtenirTriangles() {
-        Vector3f[] transformed = getTransformedVertices(); // <-- utiliser transformés
-        int nombreTriangles = vertexCount / 3;
-        Vector3f[][] triangles = new Vector3f[nombreTriangles][3];
-
-        for (int i = 0; i < nombreTriangles; i++) {
-            for (int j = 0; j < 3; j++) {
-                triangles[i][j] = new Vector3f(
-                        transformed[i * 3 + j].x,
-                        transformed[i * 3 + j].y,
-                        transformed[i * 3 + j].z
-                );
-            }
-        }
-        return triangles;
-    }
-
-    private boolean triangleIntersecte(Vector3f[] t1, Vector3f[] t2) {
-        // t1: A,B,C ; t2: P,Q,R
-        Vector3f A = t1[0], B = t1[1], C = t1[2];
-        Vector3f P = t2[0], Q = t2[1], R = t2[2];
-
-        Vector3f E1 = B.sub(A, new Vector3f());
-        Vector3f E2 = C.sub(A, new Vector3f());
-        Vector3f N1 = E1.cross(E2, new Vector3f());
-        float d1 = -N1.dot(A);
-
-        // Signe des points du triangle 2 par rapport au plan de triangle 1
-        float dp0 = N1.dot(P) + d1;
-        float dp1 = N1.dot(Q) + d1;
-        float dp2 = N1.dot(R) + d1;
-
-        if (dp0 > 0 && dp1 > 0 && dp2 > 0) return false;
-        if (dp0 < 0 && dp1 < 0 && dp2 < 0) return false;
-
-        // Plan du triangle 2
-        E1 = Q.sub(P, new Vector3f());
-        E2 = R.sub(P, new Vector3f());
-        Vector3f N2 = E1.cross(E2, new Vector3f());
-        float d2 = -N2.dot(P);
-
-        // Signe des points du triangle 1 par rapport au plan de triangle 2
-        dp0 = N2.dot(A) + d2;
-        dp1 = N2.dot(B) + d2;
-        dp2 = N2.dot(C) + d2;
-
-        if (dp0 > 0 && dp1 > 0 && dp2 > 0) return false;
-        if (dp0 < 0 && dp1 < 0 && dp2 < 0) return false;
-
-        // On calcule l'intersection de la ligne des plans
-        Vector3f D = N1.cross(N2, new Vector3f());
-
-        float max = Math.abs(D.x);
-        int index = 0;
-        if (Math.abs(D.y) > max) { max = Math.abs(D.y); index = 1; }
-        if (Math.abs(D.z) > max) index = 2;
-
-        // Projections sur l’axe dominant
-        float[] t1Proj = new float[3];
-        float[] t2Proj = new float[3];
-
-        for (int i = 0; i < 3; i++) {
-            switch (index) {
-                case 0:
-                    t1Proj[i] = t1[i].y;
-                    t2Proj[i] = t2[i].y;
-                    break;
-                case 1:
-                    t1Proj[i] = t1[i].z;
-                    t2Proj[i] = t2[i].z;
-                    break;
-                case 2:
-                    t1Proj[i] = t1[i].x;
-                    t2Proj[i] = t2[i].x;
-                    break;
-            }
-        }
-
-        float t1Min = Math.min(Math.min(t1Proj[0], t1Proj[1]), t1Proj[2]);
-        float t1Max = Math.max(Math.max(t1Proj[0], t1Proj[1]), t1Proj[2]);
-        float t2Min = Math.min(Math.min(t2Proj[0], t2Proj[1]), t2Proj[2]);
-        float t2Max = Math.max(Math.max(t2Proj[0], t2Proj[1]), t2Proj[2]);
-
-        return !(t1Max < t2Min || t2Max < t1Min);
-    }
-
-    // ---------------- Transformation CPU ----------------
-    public void setPosition(Vector3f pos) { this.position.set(pos); }
-    public void setRotation(Vector3f rot) { this.rotation.set(rot); }
-    public void setScale(Vector3f scl) { this.scale.set(scl); }
-
-    public Vector3f getPosition() { return new Vector3f(position); }
-    public Vector3f getRotation() { return new Vector3f(rotation); }
-    public Vector3f getScale() { return new Vector3f(scale); }
-
-    /**
-     * Retourne la matrice de transformation complète (model) côté CPU
-     */
-    public Matrix4f getModelMatrix() {
-        return new Matrix4f()
-                .identity()
-                .translate(position)
-                .rotateX(rotation.x)
-                .rotateY(rotation.y)
-                .rotateZ(rotation.z)
-                .scale(scale);
-    }
-
-    /**
-     * Retourne les vertices transformés dans le monde
-     */
-    public Vector3f[] getTransformedVertices() {
-        int vertexCount = vertices.length / FLOATS_PER_VERTEX;
-        Vector3f[] worldVertices = new Vector3f[vertexCount];
-        Matrix4f model = getModelMatrix();
-
-        for (int i = 0; i < vertexCount; i++) {
-            Vector3f v = new Vector3f(
-                    vertices[i * FLOATS_PER_VERTEX],       // x
-                    vertices[i * FLOATS_PER_VERTEX + 1],   // y
-                    vertices[i * FLOATS_PER_VERTEX + 2]    // z
-            );
-            model.transformPosition(v);
-            worldVertices[i] = v;
-        }
-        return worldVertices;
-    }
 }

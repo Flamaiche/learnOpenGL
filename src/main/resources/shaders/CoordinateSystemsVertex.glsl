@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 aPos;      // position du vertex
 layout(location = 1) in vec3 aColor;    // couleur du vertex
-layout(location = 2) in vec2 aTexCoord; // coordonnée texture (si utilisée)
+layout(location = 2) in vec2 aTexCoord; // coordonnée texture
 
 out vec3 vertexColor; // couleur transmise au fragment shader
 
