@@ -5,6 +5,7 @@ import learnGL.tools.Commande;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -93,7 +94,7 @@ public class CoordinateSystems {
 
     private void loop() throws IOException {
         GL.createCapabilities();
-        glEnable(GL_DEPTH_TEST); // nécessaire pour la 3D
+        glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         Shader shader = new Shader(
@@ -101,74 +102,109 @@ public class CoordinateSystems {
                 "shaders/CoordinateSystemsFragment.glsl"
         );
 
-        // Camera et commandes
-        Camera camera = new Camera(new org.joml.Vector3f(0, 0, 3));
+        Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
-        // Triangles
-        List<Shape> triangles = new ArrayList<>();
+        List<Shape> pyramides = new ArrayList<>();
+        List<Vector3f> positions = new ArrayList<>();
+        List<Float> rotations = new ArrayList<>();
 
-        float[] verticesTriangle1 = {
-                -0.25f, -0.25f, -0.25f, 1f, 0f, 0f,
-                0.25f, -0.25f, 0.0f, 0f, 1f, 0f,
-                0.0f,  0.25f, 0.0f, 0f, 0f, 1f
+        float[] verticesPyramide = {
+                -0.25f, 0.0f, -0.25f, 1f,0f,0f,
+                0.25f,0.0f,-0.25f,0f,1f,0f,
+                0.25f,0.0f,0.25f,0f,0f,1f,
+                -0.25f,0.0f,-0.25f,1f,0f,0f,
+                0.25f,0.0f,0.25f,0f,0f,1f,
+                -0.25f,0.0f,0.25f,1f,1f,0f,
+                -0.25f,0.0f,-0.25f,1f,0f,0f,
+                0.25f,0.0f,-0.25f,0f,1f,0f,
+                0.0f,0.5f,0.0f,0f,0f,1f,
+                0.25f,0.0f,-0.25f,0f,1f,0f,
+                0.25f,0.0f,0.25f,0f,0f,1f,
+                0.0f,0.5f,0.0f,1f,1f,0f,
+                0.25f,0.0f,0.25f,0f,0f,1f,
+                -0.25f,0.0f,0.25f,1f,1f,0f,
+                0.0f,0.5f,0.0f,1f,0f,1f,
+                -0.25f,0.0f,0.25f,1f,1f,0f,
+                -0.25f,0.0f,-0.25f,1f,0f,0f,
+                0.0f,0.5f,0.0f,0f,1f,1f
         };
-        Shape triangle1 = new Shape(Shape.autoAddSlotTexture(verticesTriangle1));
-        triangle1.setShader(shader);
-        triangles.add(triangle1);
 
-        float[] verticesTriangle2 = {
-                0.3f, -0.2f, 0.0f, 1f, 1f, 0f,
-                0.6f, -0.2f, 0.0f, 0f, 1f, 1f,
-                0.45f, 0.2f, 0.0f, 1f, 0f, 1f
-        };
-        Shape triangle2 = new Shape(Shape.autoAddSlotTexture(verticesTriangle2));
-        triangle2.setShader(shader);
-        triangles.add(triangle2);
+        // Création des pyramides mobiles
+        for (int i = 0; i < 2; i++) {
+            Shape p = new Shape(Shape.autoAddSlotTexture(verticesPyramide));
+            p.setShader(shader);
+            pyramides.add(p);
+            positions.add(new Vector3f(i * 0.8f + 1, 0, 0));
+            rotations.add(0f);
+        }
 
-        float[] verticesTriangle3 = {
-                -1.5f, -0.5f, 0.0f, 0.5f, 0.2f, 0.7f,
-                -0.5f, -0.5f, 0.0f, 0.2f, 0.8f, 0.3f,
-                -1.0f,  0.5f, 0.0f, 0.7f, 0.1f, 0.9f
-        };
-        Shape triangle3 = new Shape(Shape.autoAddSlotTexture(verticesTriangle3));
-        triangle3.setShader(shader);
-        triangles.add(triangle3);
+        // Création de la pyramide centrale fixe
+        Shape pyramideCentre = new Shape(Shape.autoAddSlotTexture(verticesPyramide));
+        pyramideCentre.setShader(shader);
+        Vector3f posCentre = new Vector3f(0, 0, 0); // centre
 
-        // Matrice de projection
-        org.joml.Matrix4f projection = new org.joml.Matrix4f()
+        Matrix4f projection = new Matrix4f()
                 .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
+
+        int selected = 0; // pyramide sélectionnée
+        float angleMonde = 0f;
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            // Mise à jour de la caméra avec touches et rotation
             cmd.update();
-
-            // Activation du shader
             shader.bind();
-
-            // Passage des matrices au shader
             shader.setUniformMat4f("view", camera.getViewMatrix());
             shader.setUniformMat4f("projection", projection);
 
-            // Rendu de tous les triangles
-            for (Shape s : triangles) {
-                org.joml.Matrix4f model = new org.joml.Matrix4f().identity(); // ou transformation spécifique
+            // Rotation globale autour du monde
+            angleMonde += 0.01f;
+            System.out.println(angleMonde);
+            if (angleMonde > 6.28f) angleMonde -= 6.28f; // 2*PI
+
+            // Gestion clavier pour pyramide sélectionnée
+            if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+                selected = (selected + 1) % pyramides.size();
+            }
+            Vector3f pos = positions.get(selected);
+            float rot = rotations.get(selected);
+
+            if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) pos.z -= 0.02f;
+            if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) pos.z += 0.02f;
+            if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) pos.x -= 0.02f;
+            if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) pos.x += 0.02f;
+            if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) rot -= 0.02f;
+            if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) rot += 0.02f;
+
+            rotations.set(selected, rot);
+            positions.set(selected, pos);
+
+            // Dessin des pyramides mobiles
+            for (int i = 0; i < pyramides.size(); i++) {
+                Shape s = pyramides.get(i);
+                Matrix4f model = new Matrix4f().identity();
+                model.rotateY(angleMonde);             // rotation monde
+                model.translate(positions.get(i));     // position individuelle
+                model.rotateY(rotations.get(i));       // rotation propre
                 shader.setUniformMat4f("model", model);
                 s.render();
             }
 
-            shader.unbind();
+            // Dessin de la pyramide centrale fixe
+            Matrix4f modelCentre = new Matrix4f().identity();
+            modelCentre.scale(angleMonde*0.3f + 0.1f);
+            modelCentre.translate(posCentre); // juste position
+            shader.setUniformMat4f("model", modelCentre);
+            pyramideCentre.render();
 
+            shader.unbind();
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
         // Nettoyage
-        for (Shape s : triangles) {
-            s.cleanup();
-        }
+        for (Shape s : pyramides) s.cleanup();
+        pyramideCentre.cleanup();
     }
 
 
