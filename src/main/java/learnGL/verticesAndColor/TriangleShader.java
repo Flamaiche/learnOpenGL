@@ -18,9 +18,7 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 /**
  * dessin d’un triangle avec VAO/VBO avec shader ajoutant une couleur fixe
- * forcer la couleur du triangle avec le shader ne fonctionne plus a cause de shape qui demande une couleur
  */
-@Deprecated
 public class TriangleShader {
 
     // Handle de la fenêtre GLFW
@@ -112,9 +110,9 @@ public class TriangleShader {
         // Boucle principale
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+            shader.bind();
             triangle.render();
-
+            shader.unbind();
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
