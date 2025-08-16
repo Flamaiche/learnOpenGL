@@ -159,7 +159,6 @@ public class CoordinateSystems {
 
             // Rotation globale autour du monde
             angleMonde += 0.01f;
-            System.out.println(angleMonde);
             if (angleMonde > 6.28f) angleMonde -= 6.28f; // 2*PI
 
             // Gestion clavier pour pyramide sélectionnée
@@ -178,6 +177,14 @@ public class CoordinateSystems {
 
             rotations.set(selected, rot);
             positions.set(selected, pos);
+
+            // Calcul de collision (distance entre le centre de la pyramide sélectionnée et celle du centre)
+            Vector3f delta = new Vector3f(pos).sub(posCentre);
+            float distance = delta.length();
+            float seuilCollision = 0.6f; // ajuster selon la taille de ta pyramide
+            boolean collision = distance < seuilCollision;
+
+            System.out.println("Distance à la pyramide centrale : " + distance + " | Collision : " + collision);
 
             // Dessin des pyramides mobiles
             for (int i = 0; i < pyramides.size(); i++) {
