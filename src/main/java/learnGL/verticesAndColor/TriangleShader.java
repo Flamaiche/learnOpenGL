@@ -18,6 +18,7 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 /**
  * dessin d’un triangle avec VAO/VBO avec shader ajoutant une couleur fixe
+ * forcer la couleur du triangle avec le shader ne fonctionne plus a cause de shape qui demande une couleur
  */
 
 public class TriangleShader {
