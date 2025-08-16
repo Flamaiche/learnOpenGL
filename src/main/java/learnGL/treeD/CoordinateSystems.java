@@ -150,6 +150,8 @@ public class CoordinateSystems {
         int selected = 0; // pyramide sélectionnée
         float angleMonde = 0f;
 
+        boolean tabPressedLastFrame = false;
+
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             cmd.update();
@@ -161,10 +163,12 @@ public class CoordinateSystems {
             angleMonde += 0.01f;
             if (angleMonde > 6.28f) angleMonde -= 6.28f; // 2*PI
 
-            // Gestion clavier pour pyramide sélectionnée
-            if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+            boolean tabPressed = glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
+            if (tabPressed && !tabPressedLastFrame) {
                 selected = (selected + 1) % pyramides.size();
             }
+            tabPressedLastFrame = tabPressed;
+
             Vector3f pos = positions.get(selected);
             float rot = rotations.get(selected);
 
