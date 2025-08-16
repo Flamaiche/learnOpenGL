@@ -187,35 +187,70 @@ public class Shape {
         return verticesFullSlot;
     }
 
-    // Retourne la position d’un vertex sous forme de Vector3f
-    private Vector3f getVertexPos(int index) {
-        return new Vector3f(
-                vertices[index * FLOATS_PER_VERTEX],
-                vertices[index * FLOATS_PER_VERTEX + 1],
-                vertices[index * FLOATS_PER_VERTEX + 2]
-        );
+// ----------------------
+// UTILITAIRES VECTORIELS
+// ----------------------
+
+    // Soustraction de vecteurs
+    private float[] sub(float[] a, float[] b) {
+        return new float[]{a[0] - b[0], a[1] - b[1], a[2] - b[2]};
     }
 
-    // Test triangle-triangle exact (Möller)
-    private boolean triTriIntersect(Vector3f V0, Vector3f V1, Vector3f V2,
-                                    Vector3f U0, Vector3f U1, Vector3f U2) {
-        Vector3f E1 = new Vector3f(V1).sub(V0);
-        Vector3f E2 = new Vector3f(V2).sub(V0);
-        Vector3f N1 = new Vector3f(E1).cross(E2);
+    // Produit vectoriel
+    private float[] cross(float[] a, float[] b) {
+        return new float[]{a[1]*b[2] - a[2]*b[1],
+                a[2]*b[0] - a[0]*b[2],
+                a[0]*b[1] - a[1]*b[0]};
+    }
 
-        Vector3f F1 = new Vector3f(U1).sub(U0);
-        Vector3f F2 = new Vector3f(U2).sub(U0);
-        Vector3f N2 = new Vector3f(F1).cross(F2);
+    // Produit scalaire
+    private float dot(float[] a, float[] b) {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    }
 
-        if (N1.length() == 0 || N2.length() == 0) return false;
+    // Longueur d’un vecteur
+    private float length(float[] v) {
+        return (float)Math.sqrt(dot(v,v));
+    }
 
-        float du0 = N1.dot(new Vector3f(U0).sub(V0));
-        float du1 = N1.dot(new Vector3f(U1).sub(V0));
-        float du2 = N1.dot(new Vector3f(U2).sub(V0));
+    // Projection d’un triangle sur un axe (0=x,1=y,2=z)
+    private float[] projectOnAxisRaw(int axis, float[] v0, float[] v1, float[] v2) {
+        float p0 = v0[axis], p1 = v1[axis], p2 = v2[axis];
+        return new float[]{Math.min(p0, Math.min(p1,p2)), Math.max(p0, Math.max(p1,p2))};
+    }
 
-        float dv0 = N2.dot(new Vector3f(V0).sub(U0));
-        float dv1 = N2.dot(new Vector3f(V1).sub(U0));
-        float dv2 = N2.dot(new Vector3f(V2).sub(U0));
+    // Vérifie si deux intervalles se chevauchent
+    private boolean intervalsOverlap(float min1, float max1, float min2, float max2) {
+        return !(max1 < min2 || max2 < min1);
+    }
+
+// ----------------------
+// TRIANGLE-TRIANGLE INTERSECTION
+// ----------------------
+
+    // Test exact d’intersection entre deux triangles (Möller)
+// Utilise uniquement des float[] pour éviter la création répétitive de Vector3f
+    private boolean triTriIntersectRaw(float[] V, int vi, float[] U, int ui) {
+        float[] V0 = {V[vi * FLOATS_PER_VERTEX], V[vi * FLOATS_PER_VERTEX + 1], V[vi * FLOATS_PER_VERTEX + 2]};
+        float[] V1 = {V[(vi+1) * FLOATS_PER_VERTEX], V[(vi+1) * FLOATS_PER_VERTEX + 1], V[(vi+1) * FLOATS_PER_VERTEX + 2]};
+        float[] V2 = {V[(vi+2) * FLOATS_PER_VERTEX], V[(vi+2) * FLOATS_PER_VERTEX + 1], V[(vi+2) * FLOATS_PER_VERTEX + 2]};
+
+        float[] U0 = {U[ui * FLOATS_PER_VERTEX], U[ui * FLOATS_PER_VERTEX + 1], U[ui * FLOATS_PER_VERTEX + 2]};
+        float[] U1 = {U[(ui+1) * FLOATS_PER_VERTEX], U[(ui+1) * FLOATS_PER_VERTEX + 1], U[(ui+1) * FLOATS_PER_VERTEX + 2]};
+        float[] U2 = {U[(ui+2) * FLOATS_PER_VERTEX], U[(ui+2) * FLOATS_PER_VERTEX + 1], U[(ui+2) * FLOATS_PER_VERTEX + 2]};
+
+        float[] N1 = cross(sub(V1, V0), sub(V2, V0));
+        float[] N2 = cross(sub(U1, U0), sub(U2, U0));
+
+        if (length(N1) == 0 || length(N2) == 0) return false;
+
+        float du0 = dot(N1, sub(U0, V0));
+        float du1 = dot(N1, sub(U1, V0));
+        float du2 = dot(N1, sub(U2, V0));
+
+        float dv0 = dot(N2, sub(V0, U0));
+        float dv1 = dot(N2, sub(V1, U0));
+        float dv2 = dot(N2, sub(V2, U0));
 
         float EPSILON = 1e-6f;
         if (Math.abs(du0) < EPSILON) du0 = 0;
@@ -228,38 +263,28 @@ public class Shape {
         if (du0 * du1 > 0 && du0 * du2 > 0) return false;
         if (dv0 * dv1 > 0 && dv0 * dv2 > 0) return false;
 
-        Vector3f D = new Vector3f(N1).cross(N2);
-        int max = 0;
-        float absX = Math.abs(D.x), absY = Math.abs(D.y), absZ = Math.abs(D.z);
-        if (absY > absX) max = 1;
-        if (absZ > ((max == 0) ? absX : absY)) max = 2;
+        float[] D = cross(N1, N2);
+        int max = Math.abs(D[0]) > Math.abs(D[1]) ? 0 : 1;
+        max = Math.abs(D[2]) > Math.abs(D[max]) ? 2 : max;
 
-        float[] tri1 = projectOnAxis(max, V0, V1, V2);
-        float[] tri2 = projectOnAxis(max, U0, U1, U2);
+        float[] tri1 = projectOnAxisRaw(max, V0, V1, V2);
+        float[] tri2 = projectOnAxisRaw(max, U0, U1, U2);
 
         return intervalsOverlap(tri1[0], tri1[1], tri2[0], tri2[1]);
     }
 
-    private float[] projectOnAxis(int axis, Vector3f v0, Vector3f v1, Vector3f v2) {
-        float p0 = (axis == 0) ? v0.x : (axis == 1 ? v0.y : v0.z);
-        float p1 = (axis == 0) ? v1.x : (axis == 1 ? v1.y : v1.z);
-        float p2 = (axis == 0) ? v2.x : (axis == 1 ? v2.y : v2.z);
-        float min = Math.min(p0, Math.min(p1, p2));
-        float max = Math.max(p0, Math.max(p1, p2));
-        return new float[]{min, max};
-    }
+// ----------------------
+// COLLISION SHAPE-SHAPE
+// ----------------------
 
-    private boolean intervalsOverlap(float min1, float max1, float min2, float max2) {
-        return !(max1 < min2 || max2 < min1);
-    }
-
-    // Test collision entre deux shapes
+    // Test si cette shape intersecte une autre shape
+// Utilise bounding box pour un early out rapide, puis test triangle par triangle
     public boolean intersectsOptimized(Shape other) {
         // Bounding box rapide pour early out
-        float[] minA = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-        float[] maxA = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-        float[] minB = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-        float[] maxB = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        float[] minA = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] maxA = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        float[] minB = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] maxB = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
 
         for (int i = 0; i < vertexCount; i++) {
             for (int j = 0; j < 3; j++) {
@@ -287,23 +312,8 @@ public class Shape {
 
         // Test triangle par triangle
         for (int i = 0; i < vertexCount; i += 3) {
-            float[] t1v0 = {vertices[i * FLOATS_PER_VERTEX], vertices[i * FLOATS_PER_VERTEX + 1], vertices[i * FLOATS_PER_VERTEX + 2]};
-            float[] t1v1 = {vertices[(i+1) * FLOATS_PER_VERTEX], vertices[(i+1) * FLOATS_PER_VERTEX + 1], vertices[(i+1) * FLOATS_PER_VERTEX + 2]};
-            float[] t1v2 = {vertices[(i+2) * FLOATS_PER_VERTEX], vertices[(i+2) * FLOATS_PER_VERTEX + 1], vertices[(i+2) * FLOATS_PER_VERTEX + 2]};
-
             for (int j = 0; j < otherVertexCount; j += 3) {
-                float[] t2v0 = {other.vertices[j * FLOATS_PER_VERTEX], other.vertices[j * FLOATS_PER_VERTEX + 1], other.vertices[j * FLOATS_PER_VERTEX + 2]};
-                float[] t2v1 = {other.vertices[(j+1) * FLOATS_PER_VERTEX], other.vertices[(j+1) * FLOATS_PER_VERTEX + 1], other.vertices[(j+1) * FLOATS_PER_VERTEX + 2]};
-                float[] t2v2 = {other.vertices[(j+2) * FLOATS_PER_VERTEX], other.vertices[(j+2) * FLOATS_PER_VERTEX + 1], other.vertices[(j+2) * FLOATS_PER_VERTEX + 2]};
-
-                if (triTriIntersect(
-                        new Vector3f(t1v0[0], t1v0[1], t1v0[2]),
-                        new Vector3f(t1v1[0], t1v1[1], t1v1[2]),
-                        new Vector3f(t1v2[0], t1v2[1], t1v2[2]),
-                        new Vector3f(t2v0[0], t2v0[1], t2v0[2]),
-                        new Vector3f(t2v1[0], t2v1[1], t2v1[2]),
-                        new Vector3f(t2v2[0], t2v2[1], t2v2[2])
-                )) {
+                if (triTriIntersectRaw(vertices, i, other.vertices, j)) {
                     return true;
                 }
             }
