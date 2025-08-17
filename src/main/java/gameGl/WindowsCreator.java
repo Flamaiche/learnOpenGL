@@ -1,10 +1,8 @@
 package gameGl;
 
-import gameGl.tools.PreVerticesTable;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
 import learnGL.tools.Shader;
-import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.*;
@@ -106,31 +104,47 @@ public class WindowsCreator {
         glEnable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
 
-        Shader EnnemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
-        Ennemis[] ennemis = new Ennemis[2];
-        for (int i = 0; i < 2; i++) {
-            // Création d'un ennemi
-            ennemis[i] = new Ennemis(EnnemisShader, new float[]{0, 0, 3});
-        }
-
-        Crosshair crosshair = new Crosshair(0.1f, 0.01f);
-
         // --- Initialisation caméra ---
         Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
+        Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
+
+        Ennemis[] ennemis = new Ennemis[2];
+        for (int i = 0; i < ennemis.length; i++) {
+            ennemis[i] = new Ennemis(ennemisShader,
+                    new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z});
+        }
+
+        Crosshair crosshair = new Crosshair(0.1f, 0.01f);
+
         Matrix4f projection = new Matrix4f()
                 .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
-        Matrix4f model = new Matrix4f().identity();
+
+        double lastTime = glfwGetTime();
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            double currentTime = glfwGetTime();
+            float deltaTime = (float) (currentTime - lastTime);
+            lastTime = currentTime;
+
             cmd.update(); // mise à jour caméra
 
             // --- Ennemis ---
-            for (Ennemis ennemi : ennemis) {
-                ennemi.render(camera.getViewMatrix(), projection);
+            for (Ennemis e : ennemis) {
+                e.deplacement(deltaTime); // déplacement fluide
+                e.render(camera.getViewMatrix(), projection);
+
+                // Despawn si trop loin et repositionnement
+                if (e.shouldDespawn(camera.getPosition())) {
+                    e.setDeplacement(new float[]{
+                            camera.getPosition().x,
+                            camera.getPosition().y,
+                            camera.getPosition().z
+                    });
+                }
             }
 
             // --- Crosshair ---
@@ -139,8 +153,10 @@ public class WindowsCreator {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-        for (Ennemis ennemi : ennemis) {
-            ennemi.getCorps().cleanup();
+
+        // Nettoyage
+        for (Ennemis e : ennemis) {
+            e.cleanup();
         }
         crosshair.cleanup();
     }
