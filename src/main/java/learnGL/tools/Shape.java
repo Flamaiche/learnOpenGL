@@ -4,7 +4,6 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
 
-import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
 public class Shape {
@@ -326,4 +325,46 @@ public class Shape {
         return false;
     }
 
+    public void setColor(float v, float v1, float v2, float v3) {
+        for (int i = 0; i < vertexCount; i++) {
+            vertices[i * FLOATS_PER_VERTEX + 3] = v; // R
+            vertices[i * FLOATS_PER_VERTEX + 4] = v1; // G
+            vertices[i * FLOATS_PER_VERTEX + 5] = v2; // B
+            vertices[i * FLOATS_PER_VERTEX + 6] = v3; // A
+        }
+        // Recréer le VBO avec les nouvelles couleurs
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        FloatBuffer buffer = MemoryUtil.memAllocFloat(vertices.length);
+        buffer.put(vertices).flip();
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+        MemoryUtil.memFree(buffer);
+    }
+
+    public void setPosition(float v, float v1, float v2) {
+    for (int i = 0; i < vertexCount; i++) {
+            vertices[i * FLOATS_PER_VERTEX] = v; // X
+            vertices[i * FLOATS_PER_VERTEX + 1] = v1; // Y
+            vertices[i * FLOATS_PER_VERTEX + 2] = v2; // Z
+        }
+        // Recréer le VBO avec les nouvelles positions
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        FloatBuffer buffer = MemoryUtil.memAllocFloat(vertices.length);
+        buffer.put(vertices).flip();
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+        MemoryUtil.memFree(buffer);
+    }
+
+    public void setScale(float v) {
+    for (int i = 0; i < vertexCount; i++) {
+            vertices[i * FLOATS_PER_VERTEX] *= v; // X
+            vertices[i * FLOATS_PER_VERTEX + 1] *= v; // Y
+            vertices[i * FLOATS_PER_VERTEX + 2] *= v; // Z
+        }
+        // Recréer le VBO avec les nouvelles échelles
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        FloatBuffer buffer = MemoryUtil.memAllocFloat(vertices.length);
+        buffer.put(vertices).flip();
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+        MemoryUtil.memFree(buffer);
+    }
 }
