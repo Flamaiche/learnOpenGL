@@ -91,7 +91,7 @@ public class TriangleTransformation {
         GL.createCapabilities();
         glClearColor(0f, 0f, 0f, 1f); // fond noir
 
-        Shader shader = new Shader("shaders/TriangleTransformationVertex.glsl", "shaders/TriangleTransformationFragment.glsl");
+        Shader shader = new Shader("shadersTest/TriangleTransformationVertex.glsl", "shadersTest/TriangleTransformationFragment.glsl");
 
         // Triangle de base
         float[] baseVertices = {

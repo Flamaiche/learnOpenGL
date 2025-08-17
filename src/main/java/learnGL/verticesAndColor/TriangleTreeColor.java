@@ -89,7 +89,7 @@ public class TriangleTreeColor {
         GL.createCapabilities();
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
 
-        Shader shader = new Shader("shaders/TriangleTreeColorVertex.glsl", "shaders/TriangleTreeColorFragment.glsl");
+        Shader shader = new Shader("shadersTest/TriangleTreeColorVertex.glsl", "shadersTest/TriangleTreeColorFragment.glsl");
 
         float[] verticesTriangle = {
                 300f, 100f, 0.0f, 1f, 0f, 0f,

@@ -92,7 +92,7 @@ public class TriangleShader {
         glClearColor(0f, 0f, 0f, 0f);
 
         // 1. Chargement des shaders
-        Shader shader = new Shader("shaders/TriangleShaderVertex.glsl", "shaders/TriangleShaderFragment.glsl");
+        Shader shader = new Shader("shadersTest/TriangleShaderVertex.glsl", "shadersTest/TriangleShaderFragment.glsl");
 
         // 2. Définition des sommets du triangle (coordonnées logiques ou normalisées)
         float[] vertices = {

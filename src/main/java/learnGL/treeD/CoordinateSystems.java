@@ -98,8 +98,8 @@ public class CoordinateSystems {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         Shader shader = new Shader(
-                "shaders/CoordinateSystemsVertex.glsl",
-                "shaders/CoordinateSystemsFragment.glsl"
+                "shadersTest/CoordinateSystemsVertex.glsl",
+                "shadersTest/CoordinateSystemsFragment.glsl"
         );
 
         Camera camera = new Camera(new Vector3f(0, 0, 3));

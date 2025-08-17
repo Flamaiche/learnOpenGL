@@ -78,8 +78,8 @@ public class TriangleTexture {
         glClearColor(0f, 0f, 0f, 1f);
 
         // Shader pour la texture
-        Shader shader = new Shader("shaders/TriangleTextureVertex.glsl",
-                "shaders/TriangleTextureFragment.glsl");
+        Shader shader = new Shader("shadersTest/TriangleTextureVertex.glsl",
+                "shadersTest/TriangleTextureFragment.glsl");
 
         float[] vertices = {
                 -0.5f, -0.5f, 0f, 1f, 1f, 0f, 0f, 0f,  // u=0, v=0
@@ -91,7 +91,7 @@ public class TriangleTexture {
         triangle.setShader(shader);
 
         // Charger la texture depuis resources
-        Texture texture = new Texture("textures/wall.jpg");
+        Texture texture = new Texture("texturesTest/wall.jpg");
 
         shader.bind();
         int texLoc = glGetUniformLocation(shader.getProgramId(), "ourTexture");
