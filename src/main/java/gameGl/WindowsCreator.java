@@ -106,9 +106,12 @@ public class WindowsCreator {
         glEnable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
 
-        Shader playerShader = new Shader("shaders/PlayerVertex.glsl", "shaders/PlayerFragment.glsl");
-        Player p = initPlayer();
-        p.getCorps().setShader(playerShader);
+        Shader EnnemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
+        Ennemis[] ennemis = new Ennemis[2];
+        for (int i = 0; i < 2; i++) {
+            // Création d'un ennemi
+            ennemis[i] = new Ennemis(EnnemisShader, new float[]{0, 0, 3});
+        }
 
         Crosshair crosshair = new Crosshair(0.1f, 0.01f);
 
@@ -123,32 +126,23 @@ public class WindowsCreator {
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Mise à jour de la caméra
-            cmd.update();
+            cmd.update(); // mise à jour caméra
 
-            // --- Dessin joueur ---
-            playerShader.bind();
-            playerShader.setUniformMat4f("view", camera.getViewMatrix());
-            playerShader.setUniformMat4f("projection", projection);
-            playerShader.setUniformMat4f("model", model);
-             p.getCorps().render();
-            playerShader.unbind();
+            // --- Ennemis ---
+            for (Ennemis ennemi : ennemis) {
+                ennemi.render(camera.getViewMatrix(), projection);
+            }
 
-            // --- Dessin de la crosshair (toujours visible) ---
+            // --- Crosshair ---
             crosshair.render();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-
-        p.getCorps().cleanup();
+        for (Ennemis ennemi : ennemis) {
+            ennemi.getCorps().cleanup();
+        }
         crosshair.cleanup();
-    }
-
-    public Player initPlayer() {
-        float[] vertices = PreVerticesTable.generateCubeSimple(0.5f);
-        Shape corps = new Shape(Shape.autoAddSlotColor(vertices));
-        return new Player(corps, 5, 0, 0);
     }
 
     public static void main(String[] args) throws IOException {
