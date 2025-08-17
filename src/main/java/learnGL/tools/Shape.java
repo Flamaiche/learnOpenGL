@@ -159,8 +159,9 @@ public class Shape {
 
     // Ajout automatique de slot couleur
     public static float[] autoAddSlotColor(float[] vertices) {
-        float[] verticesFullSlot = new float[vertices.length / 3 * FLOATS_PER_VERTEX];
-        for (int i = 0; i < verticesFullSlot.length / FLOATS_PER_VERTEX; i++) {
+        int vertexCount = vertices.length / 3; // 3 floats par sommet : x, y, z
+        float[] verticesFullSlot = new float[vertexCount * FLOATS_PER_VERTEX];
+        for (int i = 0; i < vertexCount; i++) {
             verticesFullSlot[i * FLOATS_PER_VERTEX] = vertices[i * 3];
             verticesFullSlot[i * FLOATS_PER_VERTEX + 1] = vertices[i * 3 + 1];
             verticesFullSlot[i * FLOATS_PER_VERTEX + 2] = vertices[i * 3 + 2];
@@ -173,19 +174,22 @@ public class Shape {
 
     // Ajout automatique de slot texture
     public static float[] autoAddSlotTexture(float[] vertices) {
-        float[] verticesFullSlot = new float[vertices.length / 6 * FLOATS_PER_VERTEX]; // 3 pos + 3 couleur
-        for (int i = 0; i < verticesFullSlot.length / FLOATS_PER_VERTEX; i++) {
-            verticesFullSlot[i * FLOATS_PER_VERTEX] = vertices[i * 6];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 1] = vertices[i * 6 + 1];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 2] = vertices[i * 6 + 2];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 3] = vertices[i * 6 + 3];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 4] = vertices[i * 6 + 4];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 5] = vertices[i * 6 + 5];
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 6] = 0.0f;
-            verticesFullSlot[i * FLOATS_PER_VERTEX + 7] = 0.0f;
+        int vertexCount = vertices.length / 6;
+        float[] verticesFullSlot = new float[vertexCount * FLOATS_PER_VERTEX];
+        for (int i = 0; i < vertexCount; i++) {
+            // copier pos + couleur
+            verticesFullSlot[i*8]   = vertices[i*6];
+            verticesFullSlot[i*8+1] = vertices[i*6+1];
+            verticesFullSlot[i*8+2] = vertices[i*6+2];
+            verticesFullSlot[i*8+3] = vertices[i*6+3];
+            verticesFullSlot[i*8+4] = vertices[i*6+4];
+            verticesFullSlot[i*8+5] = vertices[i*6+5];
+            verticesFullSlot[i*8+6] = 0f;
+            verticesFullSlot[i*8+7] = 0f;
         }
         return verticesFullSlot;
     }
+
 
 // ----------------------
 // UTILITAIRES VECTORIELS
