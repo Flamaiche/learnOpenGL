@@ -135,9 +135,7 @@ public class WindowsCreator {
             playerShader.unbind();
 
             // --- Dessin de la crosshair (toujours visible) ---
-            glDisable(GL_DEPTH_TEST);   // ignore la profondeur
             crosshair.render();
-            glEnable(GL_DEPTH_TEST);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

@@ -5,6 +5,8 @@ import learnGL.tools.Shape;
 
 import java.io.IOException;
 
+import static org.lwjgl.opengl.GL11C.*;
+
 public class Crosshair {
 
     private final Shape shape;
@@ -46,6 +48,10 @@ public class Crosshair {
     }
 
     public void render() {
+        // Désactiver depth test si nécessaire
+        boolean wasDepthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+        if (wasDepthTestEnabled) glDisable(GL_DEPTH_TEST);
+
         shader.bind();
 
         // Projection orthographique pour rester fixe à l’écran
@@ -54,6 +60,9 @@ public class Crosshair {
 
         shape.render();
         shader.unbind();
+
+        // Rétablir le depth test si il était activé
+        if (wasDepthTestEnabled) glEnable(GL_DEPTH_TEST);
     }
 
     public void cleanup() {
