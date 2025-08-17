@@ -46,6 +46,7 @@ public class Ennemis {
 
         // direction vers la cible
         direction = new Vector3f(target).sub(position).normalize();
+        System.out.println(target + " "  + position + " " + direction);
     }
 
     public float[] generateSpawn(float playerX, float playerY, float playerZ) {
@@ -67,13 +68,6 @@ public class Ennemis {
         // déplacement vers la cible
         Vector3f deplace = new Vector3f(direction).mul(speed * deltaTime);
         position.add(deplace);
-
-        // si proche de la cible, choisir un nouveau point
-        if (position.distance(target) < 1.0f) {
-            float[] newTarget = generateSpawn(position.x, position.y, position.z);
-            target = new Vector3f(newTarget[0], newTarget[1], newTarget[2]);
-            direction = new Vector3f(target).sub(position).normalize();
-        }
     }
 
     public boolean shouldDespawn(Vector3f cameraPos) {

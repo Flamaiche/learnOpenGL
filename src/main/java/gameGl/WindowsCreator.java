@@ -12,6 +12,8 @@ import org.lwjgl.system.*;
 
 import java.io.IOException;
 import java.nio.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -109,6 +111,7 @@ public class WindowsCreator {
         Commande cmd = new Commande(camera, window);
 
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
+        Shader ballShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
 
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
@@ -120,6 +123,10 @@ public class WindowsCreator {
 
         Matrix4f projection = new Matrix4f()
                 .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
+
+        ArrayList<Ball> balls = new ArrayList<>();
+        double lastShootTime = 0;
+        double shootCooldown = 0.3; // temps en secondes entre deux tirs
 
         double lastTime = glfwGetTime();
 
@@ -134,16 +141,42 @@ public class WindowsCreator {
 
             // --- Ennemis ---
             for (Ennemis e : ennemis) {
-                e.deplacement(deltaTime); // déplacement fluide
+                e.deplacement(deltaTime);
                 e.render(camera.getViewMatrix(), projection);
 
-                // Despawn si trop loin et repositionnement
                 if (e.shouldDespawn(camera.getPosition())) {
                     e.setDeplacement(new float[]{
                             camera.getPosition().x,
                             camera.getPosition().y,
                             camera.getPosition().z
                     });
+                }
+            }
+
+            // --- Tir ---
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Q) == GLFW.GLFW_PRESS) {
+                if (currentTime - lastShootTime >= shootCooldown) {
+                    lastShootTime = currentTime;
+
+                    // Position légèrement devant la caméra
+                    Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
+
+                    float baseSize = 0.2f;
+
+                    balls.add(new Ball(ballShader, spawnPos, new Vector3f(camera.getFront()), baseSize));
+                }
+            }
+
+            // --- Balles ---
+            Iterator<Ball> it = balls.iterator();
+            while (it.hasNext()) {
+                Ball b = it.next();
+                b.update(deltaTime);
+                b.render(camera.getViewMatrix(), projection);
+
+                if (b.shouldDespawn(camera.getPosition())) {
+                    b.cleanup();
+                    it.remove();
                 }
             }
 
@@ -155,11 +188,12 @@ public class WindowsCreator {
         }
 
         // Nettoyage
-        for (Ennemis e : ennemis) {
-            e.cleanup();
-        }
+        for (Ennemis e : ennemis) e.cleanup();
+        for (Ball b : balls) b.cleanup();
         crosshair.cleanup();
     }
+
+
 
     public static void main(String[] args) throws IOException {
         new WindowsCreator().run();
