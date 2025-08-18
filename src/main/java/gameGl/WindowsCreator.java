@@ -102,43 +102,52 @@ public class WindowsCreator {
     }
 
     private void loop() throws IOException {
+        // --- Initialisation OpenGL ---
         GL.createCapabilities();
         glEnable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
 
-        // --- Initialisation caméra ---
+        // --- Initialisation caméra et commandes ---
         Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
+        // --- Shaders ---
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader ballShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
 
-        Ennemis[] ennemis = new Ennemis[2];
+        // --- Initialisation ennemis ---
+        Ennemis[] ennemis = new Ennemis[10];
         for (int i = 0; i < ennemis.length; i++) {
             ennemis[i] = new Ennemis(ennemisShader,
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z});
         }
 
+        // --- Crosshair ---
         Crosshair crosshair = new Crosshair(0.1f, 0.01f);
 
+        // --- Projection ---
         Matrix4f projection = new Matrix4f()
                 .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
 
+        // --- Gestion des balles ---
         ArrayList<Ball> balls = new ArrayList<>();
         double lastShootTime = 0;
-        double shootCooldown = 0.3; // temps en secondes entre deux tirs
+        double shootCooldown = 0.3; // secondes entre deux tirs
 
         double lastTime = glfwGetTime();
         int score = 0;
 
+        // --- Boucle principale ---
         while (!glfwWindowShouldClose(window)) {
+            // Nettoyage du buffer
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             double currentTime = glfwGetTime();
             float deltaTime = (float) (currentTime - lastTime);
             lastTime = currentTime;
 
-            cmd.update(); // mise à jour caméra
+            // Mise à jour caméra
+            cmd.update();
 
             // --- Ennemis ---
             for (Ennemis e : ennemis) {
@@ -160,10 +169,10 @@ public class WindowsCreator {
                     lastShootTime = currentTime;
 
                     // Position légèrement devant la caméra
-                    Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
+                    Vector3f spawnPos = new Vector3f(camera.getPosition())
+                            .add(new Vector3f(camera.getFront()).mul(0.5f));
 
                     float baseSize = 0.2f;
-
                     balls.add(new Ball(ballShader, spawnPos, new Vector3f(camera.getFront()), baseSize));
                 }
             }
@@ -185,11 +194,12 @@ public class WindowsCreator {
             // --- Crosshair ---
             crosshair.render();
 
+            // --- Swap buffers et events ---
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
-        // Nettoyage
+        // --- Nettoyage final ---
         for (Ennemis e : ennemis) e.cleanup();
         for (Ball b : balls) b.cleanup();
         crosshair.cleanup();
