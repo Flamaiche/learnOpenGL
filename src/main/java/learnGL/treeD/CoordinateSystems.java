@@ -159,7 +159,7 @@ public class CoordinateSystems {
             shader.setUniformMat4f("view", camera.getViewMatrix());
             shader.setUniformMat4f("projection", projection);
 
-            // Rotation globale autour du monde
+            // Rotation globale
             angleMonde += 0.01f;
             if (angleMonde > 6.28f) angleMonde -= 6.28f; // 2*PI
 
@@ -182,29 +182,34 @@ public class CoordinateSystems {
             rotations.set(selected, rot);
             positions.set(selected, pos);
 
-            // Calcul de collision (distance entre le centre de la pyramide sélectionnée et celle du centre)
-            Vector3f delta = new Vector3f(pos).sub(posCentre);
-            float distance = delta.length();
-            float seuilCollision = 0.6f; // ajuster selon la taille de ta pyramide
-            boolean collision = distance < seuilCollision;
+            // Calcul des matrices modèles
+            Matrix4f modelSel = new Matrix4f().identity()
+                    .rotateY(angleMonde)
+                    .translate(pos)
+                    .rotateY(rot);
 
-            System.out.println("Distance à la pyramide centrale : " + distance + " | Collision : " + collision);
+            Matrix4f modelCentre = new Matrix4f().identity()
+                    .scale(angleMonde * 0.3f + 0.1f)
+                    .translate(posCentre);
+
+            // Collision réelle avec les transformations
+            boolean collision = pyramides.get(selected)
+                    .intersectsOptimized(pyramideCentre, modelSel, modelCentre);
+
+            System.out.println("Collision avec la pyramide centrale : " + collision);
 
             // Dessin des pyramides mobiles
             for (int i = 0; i < pyramides.size(); i++) {
                 Shape s = pyramides.get(i);
-                Matrix4f model = new Matrix4f().identity();
-                model.rotateY(angleMonde);             // rotation monde
-                model.translate(positions.get(i));     // position individuelle
-                model.rotateY(rotations.get(i));       // rotation propre
+                Matrix4f model = new Matrix4f().identity()
+                        .rotateY(angleMonde)
+                        .translate(positions.get(i))
+                        .rotateY(rotations.get(i));
                 shader.setUniformMat4f("model", model);
                 s.render();
             }
 
-            // Dessin de la pyramide centrale fixe
-            Matrix4f modelCentre = new Matrix4f().identity();
-            modelCentre.scale(angleMonde*0.3f + 0.1f);
-            modelCentre.translate(posCentre); // juste position
+            // Dessin de la pyramide centrale
             shader.setUniformMat4f("model", modelCentre);
             pyramideCentre.render();
 

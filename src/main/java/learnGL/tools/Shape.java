@@ -4,6 +4,8 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
 public class Shape {
@@ -282,47 +284,68 @@ public class Shape {
 
     // Test si cette shape intersecte une autre shape
 // Utilise bounding box pour un early out rapide, puis test triangle par triangle
-    public boolean intersectsOptimized(Shape other) {
+    public boolean intersectsOptimized(Shape other, Matrix4f modelA, Matrix4f modelB) {
+        // Transforme les sommets avec leur matrice respective
+        float[] vertsA = applyTransform(this.vertices, modelA);
+        float[] vertsB = applyTransform(other.vertices, modelB);
+
+        int vertexCountA = vertsA.length / FLOATS_PER_VERTEX;
+        int vertexCountB = vertsB.length / FLOATS_PER_VERTEX;
+
         // Bounding box rapide pour early out
         float[] minA = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
         float[] maxA = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
         float[] minB = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
         float[] maxB = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
 
-        for (int i = 0; i < vertexCount; i++) {
+        for (int i = 0; i < vertexCountA; i++) {
             for (int j = 0; j < 3; j++) {
-                float v = vertices[i * FLOATS_PER_VERTEX + j];
+                float v = vertsA[i * FLOATS_PER_VERTEX + j];
                 minA[j] = Math.min(minA[j], v);
                 maxA[j] = Math.max(maxA[j], v);
             }
         }
 
-        int otherVertexCount = other.vertices.length / FLOATS_PER_VERTEX;
-        for (int i = 0; i < otherVertexCount; i++) {
+        for (int i = 0; i < vertexCountB; i++) {
             for (int j = 0; j < 3; j++) {
-                float v = other.vertices[i * FLOATS_PER_VERTEX + j];
+                float v = vertsB[i * FLOATS_PER_VERTEX + j];
                 minB[j] = Math.min(minB[j], v);
                 maxB[j] = Math.max(maxB[j], v);
             }
         }
 
-        // Si les boxes ne se touchent pas, pas besoin de test triangle
+        // Si les boxes ne se touchent pas → pas besoin de tester plus loin
         if (maxA[0] < minB[0] || minA[0] > maxB[0] ||
                 maxA[1] < minB[1] || minA[1] > maxB[1] ||
                 maxA[2] < minB[2] || minA[2] > maxB[2]) {
             return false;
         }
 
-        // Test triangle par triangle
-        for (int i = 0; i < vertexCount; i += 3) {
-            for (int j = 0; j < otherVertexCount; j += 3) {
-                if (triTriIntersectRaw(vertices, i, other.vertices, j)) {
+        // Test triangle par triangle (après transformation)
+        for (int i = 0; i < vertexCountA; i += 3) {
+            for (int j = 0; j < vertexCountB; j += 3) {
+                if (triTriIntersectRaw(vertsA, i, vertsB, j)) {
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    private float[] applyTransform(float[] vertices, Matrix4f model) {
+        float[] transformed = vertices.clone();
+        Vector3f tmp = new Vector3f();
+        for (int i = 0; i < vertices.length / FLOATS_PER_VERTEX; i++) {
+            tmp.set(vertices[i * FLOATS_PER_VERTEX],
+                    vertices[i * FLOATS_PER_VERTEX + 1],
+                    vertices[i * FLOATS_PER_VERTEX + 2]);
+            tmp.mulPosition(model); // applique la matrice
+            transformed[i * FLOATS_PER_VERTEX] = tmp.x;
+            transformed[i * FLOATS_PER_VERTEX + 1] = tmp.y;
+            transformed[i * FLOATS_PER_VERTEX + 2] = tmp.z;
+        }
+        return transformed;
     }
 
     public void setColor(float v, float v1, float v2, float v3) {
