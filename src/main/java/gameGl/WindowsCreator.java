@@ -129,6 +129,7 @@ public class WindowsCreator {
         double shootCooldown = 0.3; // temps en secondes entre deux tirs
 
         double lastTime = glfwGetTime();
+        int score = 0;
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -173,6 +174,7 @@ public class WindowsCreator {
                 Ball b = it.next();
                 b.update(deltaTime);
                 b.render(camera.getViewMatrix(), projection);
+                score += b.collisionScore(ennemis);
 
                 if (b.shouldDespawn(camera.getPosition())) {
                     b.cleanup();

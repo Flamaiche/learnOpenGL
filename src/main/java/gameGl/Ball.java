@@ -13,7 +13,7 @@ public class Ball {
     private Shader shader;
     private Vector3f position;
     private Vector3f direction;
-    private float speed = 20.0f;        // vitesse de déplacement
+    private float speed = 25.0f;        // vitesse de déplacement
     private float maxDistance = 150f;   // distance de despawn
     private Random rand = new Random();
 
@@ -56,12 +56,7 @@ public class Ball {
     }
 
     public void render(Matrix4f view, Matrix4f projection) {
-        Matrix4f model = new Matrix4f()
-                .translate(position)
-                .rotateX((float) Math.toRadians(rotation.x))
-                .rotateY((float) Math.toRadians(rotation.y))
-                .rotateZ((float) Math.toRadians(rotation.z));
-
+        Matrix4f model = getModelMatrix();
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);
@@ -71,7 +66,43 @@ public class Ball {
         shader.unbind();
     }
 
+    public Matrix4f getModelMatrix() {
+        return new Matrix4f()
+                .translate(position)
+                .rotateX((float) Math.toRadians(rotation.x))
+                .rotateY((float) Math.toRadians(rotation.y))
+                .rotateZ((float) Math.toRadians(rotation.z));
+    }
+
     public void cleanup() {
         corps.cleanup();
+    }
+
+    public int collisionScore(Ennemis[] enemies) {
+        int score = 0;
+        Matrix4f ballModel = getModelMatrix();
+        for (Ennemis enemy : enemies) {
+            if (haveDestroyed(enemy, ballModel)) {
+                score += enemy.getScore();
+                System.out.println(score);
+            }
+        }
+        return score;
+    }
+
+    public boolean haveDestroyed(Ennemis enemy, Matrix4f ballModel) {
+        Matrix4f enemyModel = enemy.getModelMatrix();
+        // Teste la collision avec la balle
+        if (enemy.getCorps().intersectsOptimized(corps, ballModel, enemyModel)) {
+            enemy.decrementVie();
+            if (enemy.getVie() <= 0) {
+                // Déplace l'ennemi hors du monde
+                enemy.setDeplacement(new float[]{
+                        Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE
+                });
+                return true;
+            }
+        }
+        return false;
     }
 }

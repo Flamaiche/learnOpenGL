@@ -18,7 +18,7 @@ public class Ennemis {
     private Vector3f position;
     private Vector3f direction;
     private Vector3f target;               // point vers lequel l'ennemi se déplace
-    private float speed = 5.0f;            // Vitesse de déplacement
+    private float speed = 2.5f;            // Vitesse de déplacement
 
     private int vie;
     private int score;
@@ -76,7 +76,7 @@ public class Ennemis {
     }
 
     public void render(Matrix4f view, Matrix4f projection) {
-        Matrix4f model = new Matrix4f().identity().translate(position);
+        Matrix4f model = getModelMatrix();
 
         shader.bind();
         shader.setUniformMat4f("view", view);
@@ -87,11 +87,30 @@ public class Ennemis {
         shader.unbind();
     }
 
+    public Matrix4f getModelMatrix() {
+        return new Matrix4f()
+                .translate(position);
+    }
+
     public void cleanup() {
         corps.cleanup();
     }
 
     public Shape getCorps() {
         return corps;
+    }
+
+    public int getVie() {
+        return vie;
+    }
+
+    public void decrementVie() {
+        if (vie > 0) {
+            vie--;
+        }
+    }
+
+    public int getScore() {
+        return score;
     }
 }
