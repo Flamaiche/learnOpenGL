@@ -223,8 +223,6 @@ public class CoordinateSystems {
         pyramideCentre.cleanup();
     }
 
-
-
     public static void main(String[] args) throws IOException {
         new CoordinateSystems().run();
     }
