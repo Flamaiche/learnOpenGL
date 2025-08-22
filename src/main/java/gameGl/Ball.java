@@ -84,7 +84,6 @@ public class Ball {
         for (Ennemis enemy : enemies) {
             if (haveDestroyed(enemy, ballModel)) {
                 score += enemy.getScore();
-                System.out.println(score);
             }
         }
         return score;
