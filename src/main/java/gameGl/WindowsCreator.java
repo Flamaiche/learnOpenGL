@@ -21,14 +21,13 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-
 public class WindowsCreator {
 
-    // The window handle
     private long window;
-    // Taille de la fenêtre
     private int width = 800;
     private int height = 600;
+
+    private Matrix4f projection = new Matrix4f();
 
     public void run() throws IOException {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
@@ -36,82 +35,80 @@ public class WindowsCreator {
         init();
         loop();
 
-        // Free the window callbacks and destroy the window
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
 
-        // Terminate GLFW and free the error callback
         glfwTerminate();
         glfwSetErrorCallback(null).free();
     }
 
     private void init() {
-        // Setup an error callback. The default implementation
-        // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
-
-        // Initialize GLFW. Most GLFW functions will not work before doing this.
-        if ( !glfwInit() )
+        if (!glfwInit())
             throw new IllegalStateException("Unable to initialize GLFW");
 
-        // Configure GLFW
-        glfwDefaultWindowHints(); // optional, the current window hints are already the default
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-        // Create the window
         window = glfwCreateWindow(width, height, "Hello World!", NULL, NULL);
-        if ( window == NULL )
+        if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-                glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
+        glfwSetKeyCallback(window, (win, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+                glfwSetWindowShouldClose(win, true);
         });
 
-        // Get the thread stack and push a new frame
-        try ( MemoryStack stack = stackPush() ) {
-            IntBuffer pWidth = stack.mallocInt(1); // int*
-            IntBuffer pHeight = stack.mallocInt(1); // int*
+        glfwSetFramebufferSizeCallback(window, (win, newWidth, newHeight) -> {
+            width = newWidth;
+            height = newHeight;
+            glViewport(0, 0, width, height);
+            projection.identity().perspective(
+                    (float) Math.toRadians(45.0f),
+                    (float) width / height,
+                    0.1f,
+                    100.0f
+            );
+        });
 
-            // Get the window size passed to glfwCreateWindow
+        projection.identity().perspective(
+                (float) Math.toRadians(45.0f),
+                (float) width / height,
+                0.1f,
+                100.0f
+        );
+
+        try (MemoryStack stack = stackPush()) {
+            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pHeight = stack.mallocInt(1);
+
             glfwGetWindowSize(window, pWidth, pHeight);
-
-            // Get the resolution of the primary monitor
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-            // Center the window
             glfwSetWindowPos(
                     window,
                     (vidmode.width() - pWidth.get(0)) / 2,
                     (vidmode.height() - pHeight.get(0)) / 2
             );
-        } // the stack frame is popped automatically
+        }
 
-        // Make the OpenGL context current
         glfwMakeContextCurrent(window);
-
-        // Enable v-sync
         glfwSwapInterval(1);
-
-        // Make the window visible
         glfwShowWindow(window);
     }
 
     private void loop() throws IOException {
         GL.createCapabilities();
         glEnable(GL_DEPTH_TEST);
-        glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
-
-        Matrix4f projection = new Matrix4f()
-                .perspective((float) Math.toRadians(45.0f), (float) width / height, 0.1f, 100.0f);
+        glClearColor(1.0f, 1.0f, 0.0f, 0.0f); // fond jaune
 
         Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader ballShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
+        Shader crosshairShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
 
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
@@ -119,7 +116,7 @@ public class WindowsCreator {
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z});
         }
 
-        Crosshair crosshair = new Crosshair(0.1f, 0.01f);
+        Crosshair crosshair = new Crosshair(crosshairShader);
 
         ArrayList<Ball> balls = new ArrayList<>();
         double lastShootTime = 0;
@@ -137,6 +134,7 @@ public class WindowsCreator {
 
             cmd.update();
 
+            // Update ennemis
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
                 e.render(camera.getViewMatrix(), projection);
@@ -150,7 +148,8 @@ public class WindowsCreator {
                 }
             }
 
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Q) == GLFW.GLFW_PRESS) {
+            // Tir
+            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
                 if (currentTime - lastShootTime >= shootCooldown) {
                     lastShootTime = currentTime;
                     Vector3f spawnPos = new Vector3f(camera.getPosition())
@@ -160,6 +159,7 @@ public class WindowsCreator {
                 }
             }
 
+            // Update balls
             Iterator<Ball> it = balls.iterator();
             while (it.hasNext()) {
                 Ball b = it.next();
@@ -173,7 +173,17 @@ public class WindowsCreator {
                 }
             }
 
-            crosshair.render();
+            // Crosshair toujours centré devant la caméra, visible et billboard
+            Vector3f crossPos = new Vector3f(camera.getPosition())
+                    .add(new Vector3f(camera.getFront()).mul(0.5f)); // proche
+            crosshair.setPosition(crossPos);
+            crosshair.render(
+                    camera.getViewMatrix(),
+                    projection,
+                    camera.getFront(),
+                    camera.getUp(),
+                    0.02f // taille visible du crosshair
+            );
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -183,6 +193,7 @@ public class WindowsCreator {
         for (Ball b : balls) b.cleanup();
         crosshair.cleanup();
     }
+
 
     public static void main(String[] args) throws IOException {
         new WindowsCreator().run();
