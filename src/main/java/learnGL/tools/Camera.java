@@ -87,7 +87,7 @@ public class Camera {
             angleVertical   += offsetVertical;
 
             // Option FPS : décommente pour limiter le pitch
-            // angleVertical = Math.max(-89.9f, Math.min(89.9f, angleVertical));
+            angleVertical = Math.max(-89.9f, Math.min(89.9f, angleVertical));
 
             updateCameraVectors();
         } else {
