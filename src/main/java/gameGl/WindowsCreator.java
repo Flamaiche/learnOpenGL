@@ -18,6 +18,7 @@ import java.util.Iterator;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.stb.STBEasyFont.stb_easy_font_print;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -194,6 +195,35 @@ public class WindowsCreator {
         crosshair.cleanup();
     }
 
+    public void drawText(String text, float x, float y, int screenWidth, int screenHeight) {
+        // Buffer pour vertices
+        java.nio.ByteBuffer charBuffer = java.nio.ByteBuffer.allocateDirect(99999);
+
+        int quads = stb_easy_font_print(x, y, text, null, charBuffer);
+
+        // --- Passage en mode 2D (orthographique) ---
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, screenWidth, screenHeight, 0, -1, 1);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        // --- Rendu du texte ---
+        glColor3f(1f, 1f, 1f); // blanc
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 16, charBuffer);
+        glDrawArrays(GL_QUADS, 0, quads * 4);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+        // --- Restauration ---
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+    }
 
     public static void main(String[] args) throws IOException {
         new WindowsCreator().run();
