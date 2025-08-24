@@ -22,12 +22,12 @@ public class Commande {
 
         // Déplacement libre
         if (!camera.isOrbitMode()) {
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(vitesse));
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(-vitesse));
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(vitesse));
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(-vitesse));
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(vitesse));
-            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(-vitesse));
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(vitesse)); // avancer
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(-vitesse)); // reculer
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(vitesse)); // droite
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(-vitesse)); // gauche
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(vitesse)); // monter
+            if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(-vitesse)); // descendre
         }
 
         camera.move(move);
