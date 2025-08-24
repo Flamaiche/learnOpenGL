@@ -108,8 +108,6 @@ public class WindowsCreator {
         GL.createCapabilities();
         glEnable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f); // fond jaune
-
-        // 🔹 Assurer le viewport initial
         glViewport(0, 0, width, height);
 
         Camera camera = new Camera(new Vector3f(0, 0, 3));
@@ -123,9 +121,11 @@ public class WindowsCreator {
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
             ennemis[i] = new Ennemis(ennemisShader,
-                    new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z}, PreVerticesTable.generateCubeSimple(1f));
+                    new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
+                    PreVerticesTable.generateCubeSimple(1f));
         }
 
+        // --- Crosshair avec pyramide de vision ---
         Crosshair crosshair = new Crosshair(crosshairShader);
 
         ArrayList<Ball> balls = new ArrayList<>();
@@ -187,14 +187,19 @@ public class WindowsCreator {
             Vector3f crossPos = new Vector3f(camera.getPosition())
                     .add(new Vector3f(camera.getFront()).mul(0.5f));
             crosshair.setPosition(crossPos);
+
             crosshair.render(
                     camera.getViewMatrix(),
                     projection,
-                    camera.getFront(),
-                    camera.getUp(),
+                    camera,
                     0.02f
             );
-            crosshair.updateHighlightedEnemy(ennemis, camera.getPosition(), camera.getFront());
+
+            // --- Mise à jour de l'ennemi ciblé ---
+            crosshair.updateHighlightedEnemy(
+                    ennemis,
+                    camera
+            );
 
             // --- Score + Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
@@ -209,6 +214,7 @@ public class WindowsCreator {
             glfwPollEvents();
         }
 
+        // --- Cleanup ---
         for (Ennemis e : ennemis) e.cleanup();
         for (Ball b : balls) b.cleanup();
         crosshair.cleanup();

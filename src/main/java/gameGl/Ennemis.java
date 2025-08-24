@@ -85,20 +85,37 @@ public class Ennemis {
         shader.setUniformMat4f("projection", projection);
         shader.setUniformMat4f("model", model);
 
+        // Rendu normal
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        corps.setColor(0f, 0f, 0f, 1f);
+        corps.render();
+
+        // Outline si highlight
         if (highlighted) {
-            // Contour : on scale légèrement, change couleur
+            // Gonfler légèrement le mesh
+            Matrix4f outlineModel = new Matrix4f(model).scale(1.05f);
+
+            shader.setUniformMat4f("model", outlineModel);
+
+            glEnable(GL_DEPTH_TEST);        // toujours tester la profondeur
+            glDepthMask(false);             // mais ne PAS écrire dans le depth buffer
+
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glLineWidth(3.0f);
-            corps.setColor(1f, 0f, 0f, 1f); // rouge
+            glLineWidth(2.5f);
+            corps.setColor(1f, 0f, 0f, 1f);
             corps.render();
-            // Reset
+
+            glDepthMask(true);              // réactiver écriture
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            corps.setColor(0f, 0f, 0f, 1f); // noir par défaut
+
+            // remettre le model normal
+            shader.setUniformMat4f("model", model);
         }
 
-        corps.render(); // rendu normal
+
         shader.unbind();
     }
+
 
     public Matrix4f getModelMatrix() {
         return new Matrix4f()
