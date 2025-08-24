@@ -1,5 +1,6 @@
 package gameGl;
 
+import gameGl.tools.Text;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
 import learnGL.tools.Shader;
@@ -18,7 +19,6 @@ import java.util.Iterator;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.stb.STBEasyFont.stb_easy_font_print;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -61,10 +61,13 @@ public class WindowsCreator {
                 glfwSetWindowShouldClose(win, true);
         });
 
+        // 🔹 Callback pour redimensionnement : viewport + projection
         glfwSetFramebufferSizeCallback(window, (win, newWidth, newHeight) -> {
             width = newWidth;
             height = newHeight;
             glViewport(0, 0, width, height);
+
+            // Projection perspective mise à jour
             projection.identity().perspective(
                     (float) Math.toRadians(45.0f),
                     (float) width / height,
@@ -73,6 +76,7 @@ public class WindowsCreator {
             );
         });
 
+        // Projection initiale
         projection.identity().perspective(
                 (float) Math.toRadians(45.0f),
                 (float) width / height,
@@ -104,12 +108,16 @@ public class WindowsCreator {
         glEnable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 0.0f, 0.0f); // fond jaune
 
+        // 🔹 Assurer le viewport initial
+        glViewport(0, 0, width, height);
+
         Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
 
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader ballShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader crosshairShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
+        Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
 
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
@@ -135,21 +143,7 @@ public class WindowsCreator {
 
             cmd.update();
 
-            // Update ennemis
-            for (Ennemis e : ennemis) {
-                e.deplacement(deltaTime);
-                e.render(camera.getViewMatrix(), projection);
-
-                if (e.shouldDespawn(camera.getPosition())) {
-                    e.setDeplacement(new float[]{
-                            camera.getPosition().x,
-                            camera.getPosition().y,
-                            camera.getPosition().z
-                    });
-                }
-            }
-
-            // Tir
+            // --- Tir ---
             if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
                 if (currentTime - lastShootTime >= shootCooldown) {
                     lastShootTime = currentTime;
@@ -160,7 +154,7 @@ public class WindowsCreator {
                 }
             }
 
-            // Update balls
+            // --- Update balls ---
             Iterator<Ball> it = balls.iterator();
             while (it.hasNext()) {
                 Ball b = it.next();
@@ -174,17 +168,40 @@ public class WindowsCreator {
                 }
             }
 
-            // Crosshair toujours centré devant la caméra, visible et billboard
+            // --- Update ennemis ---
+            for (Ennemis e : ennemis) {
+                e.deplacement(deltaTime);
+                e.render(camera.getViewMatrix(), projection);
+
+                if (e.shouldDespawn(camera.getPosition())) {
+                    e.setDeplacement(new float[]{
+                            camera.getPosition().x,
+                            camera.getPosition().y,
+                            camera.getPosition().z
+                    });
+                }
+            }
+
+            // --- Crosshair ---
             Vector3f crossPos = new Vector3f(camera.getPosition())
-                    .add(new Vector3f(camera.getFront()).mul(0.5f)); // proche
+                    .add(new Vector3f(camera.getFront()).mul(0.5f));
             crosshair.setPosition(crossPos);
             crosshair.render(
                     camera.getViewMatrix(),
                     projection,
                     camera.getFront(),
                     camera.getUp(),
-                    0.02f // taille visible du crosshair
+                    0.02f
             );
+
+            // --- Score + Texte ---
+            Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
+
+            int[] viewport = new int[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int winWidth = viewport[2];
+            int winHeight = viewport[3];
+            Text.drawText(textShader, "CENTER", winWidth / 2f, winHeight / 2f, 3f, 1f, 1f, 1f);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -193,6 +210,7 @@ public class WindowsCreator {
         for (Ennemis e : ennemis) e.cleanup();
         for (Ball b : balls) b.cleanup();
         crosshair.cleanup();
+        Text.cleanup();
     }
 
     public static void main(String[] args) throws IOException {

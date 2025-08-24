@@ -19,6 +19,7 @@ public class Ennemis {
     private Vector3f direction;
     private Vector3f target;               // point vers lequel l'ennemi se déplace
     private float speed = 2.5f;            // Vitesse de déplacement
+    private float despawnDistance = 150f; // distance fixe pour éviter téléport
 
     private int vie;
     private int score;
@@ -71,7 +72,6 @@ public class Ennemis {
     }
 
     public boolean shouldDespawn(Vector3f cameraPos) {
-        float despawnDistance = 150f; // distance fixe pour éviter téléport
         return position.distance(cameraPos) > despawnDistance;
     }
 
@@ -112,5 +112,9 @@ public class Ennemis {
 
     public int getScore() {
         return score;
+    }
+
+    public float getDespawnDistance() {
+        return despawnDistance;
     }
 }

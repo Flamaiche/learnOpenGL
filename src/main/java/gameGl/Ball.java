@@ -97,7 +97,7 @@ public class Ball {
             if (enemy.getVie() <= 0) {
                 // Déplace l'ennemi hors du monde
                 enemy.setDeplacement(new float[]{
-                        Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE
+                        enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2
                 });
                 return true;
             }
