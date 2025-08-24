@@ -1,12 +1,13 @@
 package gameGl;
 
-import gameGl.tools.PreVerticesTable;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.Random;
+
+import static org.lwjgl.opengl.GL11C.*;
 
 public class Ennemis {
     private Random rand = new Random();
@@ -20,12 +21,13 @@ public class Ennemis {
     private Vector3f target;               // point vers lequel l'ennemi se déplace
     private float speed = 2.5f;            // Vitesse de déplacement
     private float despawnDistance = 150f; // distance fixe pour éviter téléport
+    private boolean highlighted = false;
 
     private int vie;
     private int score;
 
-    public Ennemis(Shader shader, float[] centerPlayer) {
-        corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generateCubeSimple(1f)));
+    public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
+        corps = new Shape(Shape.autoAddSlotColor(verticesShape));
         corps.setColor(0f, 0f, 0f, 1f);
         corps.setShader(shader);
         this.shader = shader;
@@ -83,7 +85,18 @@ public class Ennemis {
         shader.setUniformMat4f("projection", projection);
         shader.setUniformMat4f("model", model);
 
-        corps.render();
+        if (highlighted) {
+            // Contour : on scale légèrement, change couleur
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glLineWidth(3.0f);
+            corps.setColor(1f, 0f, 0f, 1f); // rouge
+            corps.render();
+            // Reset
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            corps.setColor(0f, 0f, 0f, 1f); // noir par défaut
+        }
+
+        corps.render(); // rendu normal
         shader.unbind();
     }
 
@@ -116,5 +129,9 @@ public class Ennemis {
 
     public float getDespawnDistance() {
         return despawnDistance;
+    }
+
+    public void setHighlighted(boolean h) {
+        this.highlighted = h;
     }
 }

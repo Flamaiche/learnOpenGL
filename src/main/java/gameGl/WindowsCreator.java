@@ -1,5 +1,6 @@
 package gameGl;
 
+import gameGl.tools.PreVerticesTable;
 import gameGl.tools.Text;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
@@ -115,14 +116,14 @@ public class WindowsCreator {
         Commande cmd = new Commande(camera, window);
 
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
-        Shader ballShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
-        Shader crosshairShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
-        Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
+        Shader ballShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
+        Shader crosshairShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
+        Shader textShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
 
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
             ennemis[i] = new Ennemis(ennemisShader,
-                    new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z});
+                    new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z}, PreVerticesTable.generateCubeSimple(1f));
         }
 
         Crosshair crosshair = new Crosshair(crosshairShader);
@@ -193,6 +194,7 @@ public class WindowsCreator {
                     camera.getUp(),
                     0.02f
             );
+            crosshair.updateHighlightedEnemy(ennemis, camera.getPosition(), camera.getFront());
 
             // --- Score + Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
@@ -201,7 +203,7 @@ public class WindowsCreator {
             glGetIntegerv(GL_VIEWPORT, viewport);
             int winWidth = viewport[2];
             int winHeight = viewport[3];
-            Text.drawText(textShader, "CENTER", winWidth / 2f, winHeight / 2f, 3f, 1f, 1f, 1f);
+            Text.drawText(textShader, "CENTER", winWidth / 2f, winHeight / 2f, 3f, 1f, 1f, 5f);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
