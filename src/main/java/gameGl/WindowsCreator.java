@@ -14,8 +14,6 @@ import org.lwjgl.system.*;
 
 import java.io.IOException;
 import java.nio.*;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -62,7 +60,7 @@ public class WindowsCreator {
                 glfwSetWindowShouldClose(win, true);
         });
 
-        // 🔹 Callback pour redimensionnement : viewport + projection
+        // Callback pour redimensionnement : viewport + projection
         glfwSetFramebufferSizeCallback(window, (win, newWidth, newHeight) -> {
             width = newWidth;
             height = newHeight;
@@ -119,6 +117,7 @@ public class WindowsCreator {
         Shader crosshairShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
         Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
 
+        Ennemis.setDespawnDistance(camera.getRenderSimulation());
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
             ennemis[i] = new Ennemis(ennemisShader,
@@ -129,6 +128,7 @@ public class WindowsCreator {
         Crosshair crosshair = new Crosshair(crosshairShader);
 
         // --- Pool fixe de balles ---
+        Ball.setMaxDistance(camera.getRenderSimulation());
         final int MAX_BALLS = 20;
         Ball[] balls = new Ball[MAX_BALLS];
         for (int i = 0; i < MAX_BALLS; i++) {
