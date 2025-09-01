@@ -21,8 +21,12 @@ public class Ball {
     private float maxDistance = 150f;
     private float rotationMultiplier = 2f;
 
-    private boolean active = false; // état actif ou non
+    private boolean active = false;
     private final Random rand = new Random();
+
+    // Stocke la matrice pour éviter de la recalculer à chaque render
+    private final Matrix4f modelMatrix = new Matrix4f();
+    private boolean modelDirty = true;
 
     public Ball(Shader shader, float baseSize) {
         this.shader = shader;
@@ -31,7 +35,6 @@ public class Ball {
         corps.setShader(shader);
     }
 
-    /** Réactive et initialise la balle */
     public void activate(Vector3f startPos, Vector3f forwardDir) {
         position.set(startPos);
         direction.set(forwardDir).normalize();
@@ -44,60 +47,61 @@ public class Ball {
         );
 
         active = true;
+        modelDirty = true; // on doit recalculer la matrice
     }
 
-    /** Désactive la balle (pour le pool) */
     public void deactivate() {
         active = false;
     }
 
-    /** Vérifie si la balle est active */
     public boolean isActive() {
         return active;
     }
 
-    /** Mise à jour de la position et rotation */
     public void update(float deltaTime) {
         if (!active) return;
 
-        position.fma(speed * deltaTime, direction); // position += direction * speed * dt
-
+        position.fma(speed * deltaTime, direction);
         rotation.x += rotationSpeed.x * deltaTime * rotationMultiplier;
         rotation.y += rotationSpeed.y * deltaTime * rotationMultiplier;
         rotation.z += rotationSpeed.z * deltaTime * rotationMultiplier;
 
-        if (position.length() > maxDistance) active = false; // auto-désactivation si trop loin
+        if (position.length() > maxDistance) active = false;
+
+        modelDirty = true; // la position/rotation a changé
     }
 
-    /** Rendu de la balle */
     public void render(Matrix4f view, Matrix4f projection) {
         if (!active) return;
 
-        Matrix4f model = getModelMatrix();
+        if (modelDirty) updateModelMatrix();
+
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);
-        shader.setUniformMat4f("model", model);
-
+        shader.setUniformMat4f("model", modelMatrix);
         corps.render();
         shader.unbind();
     }
 
-    /** Matrice de transformation pour le rendu */
-    public Matrix4f getModelMatrix() {
-        return new Matrix4f()
+    private void updateModelMatrix() {
+        modelMatrix.identity()
                 .translate(position)
                 .rotateX((float) Math.toRadians(rotation.x))
                 .rotateY((float) Math.toRadians(rotation.y))
                 .rotateZ((float) Math.toRadians(rotation.z));
+        modelDirty = false;
     }
 
-    /** Libération des ressources */
+    public Matrix4f getModelMatrix() {
+        if (modelDirty) updateModelMatrix();
+        return modelMatrix;
+    }
+
     public void cleanup() {
         corps.cleanup();
     }
 
-    /** Collision contre ennemis et mise à jour du score */
     public int collisionScore(Ennemis[] enemies) {
         if (!active) return 0;
 
@@ -111,7 +115,6 @@ public class Ball {
         return score;
     }
 
-    /** Vérifie collision et décrémente vie ennemis */
     private boolean haveDestroyed(Ennemis enemy, Matrix4f ballModel) {
         Matrix4f enemyModel = enemy.getModelMatrix();
         if (enemy.getCorps().intersectsOptimized(corps, ballModel, enemyModel)) {
@@ -122,7 +125,7 @@ public class Ball {
                         enemy.getDespawnDistance() * 2,
                         enemy.getDespawnDistance() * 2
                 });
-                active = false; // désactive la balle après destruction
+                active = false;
                 return true;
             }
         }

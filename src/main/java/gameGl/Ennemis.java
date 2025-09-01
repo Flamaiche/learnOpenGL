@@ -11,20 +11,23 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class Ennemis {
     private Random rand = new Random();
-    private float spawnSize = 10.0f;     // Taille de la zone de spawn
-    private float exclusionSize = 0.0f;  // Zone interdite autour du joueur
+    private float spawnSize = 10.0f;
+    private float exclusionSize = 0.0f;
 
     private Shape corps;
     private Shader shader;
     private Vector3f position;
     private Vector3f direction;
-    private Vector3f target;               // point vers lequel l'ennemi se déplace
-    private float speed = 2.5f;            // Vitesse de déplacement
-    private float despawnDistance = 150f; // distance fixe pour éviter téléport
+    private Vector3f target;
+    private float speed = 2.5f;
+    private float despawnDistance = 150f;
     private boolean highlighted = false;
 
     private int vie;
     private int score;
+
+    // Pré-calcul de la matrix
+    private final Matrix4f modelMatrix = new Matrix4f();
 
     public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
         corps = new Shape(Shape.autoAddSlotColor(verticesShape));
@@ -36,20 +39,20 @@ public class Ennemis {
         score = 10;
 
         setDeplacement(centerPlayer);
+        updateModelMatrix(); // initialisation
     }
 
     public void setDeplacement(float[] centerPlayer) {
-        // position aléatoire
         float[] coors = generateSpawn(centerPlayer[0], centerPlayer[1], centerPlayer[2]);
         position = new Vector3f(coors[0], coors[1], coors[2]);
 
-        // cible aléatoire
         float[] targetCoords = generateSpawn(centerPlayer[0], centerPlayer[1], centerPlayer[2]);
         target = new Vector3f(targetCoords[0], targetCoords[1], targetCoords[2]);
 
-        // direction vers la cible
         direction = new Vector3f(target).sub(position).normalize();
         System.out.println(target + " "  + position + " " + direction);
+
+        updateModelMatrix();
     }
 
     public float[] generateSpawn(float playerX, float playerY, float playerZ) {
@@ -68,9 +71,13 @@ public class Ennemis {
     }
 
     public void deplacement(float deltaTime) {
-        // déplacement vers la cible
         Vector3f deplace = new Vector3f(direction).mul(speed * deltaTime);
         position.add(deplace);
+        updateModelMatrix(); // ✅ Mise à jour à chaque frame
+    }
+
+    private void updateModelMatrix() {
+        modelMatrix.identity().translate(position);
     }
 
     public boolean shouldDespawn(Vector3f cameraPos) {
@@ -78,12 +85,10 @@ public class Ennemis {
     }
 
     public void render(Matrix4f view, Matrix4f projection) {
-        Matrix4f model = getModelMatrix();
-
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);
-        shader.setUniformMat4f("model", model);
+        shader.setUniformMat4f("model", modelMatrix);
 
         // Rendu normal
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -92,34 +97,29 @@ public class Ennemis {
 
         // Outline si highlight
         if (highlighted) {
-            // Gonfler légèrement le mesh
-            Matrix4f outlineModel = new Matrix4f(model).scale(1.05f);
+            Matrix4f outlineModel = new Matrix4f(modelMatrix).scale(1.05f);
 
             shader.setUniformMat4f("model", outlineModel);
 
-            glEnable(GL_DEPTH_TEST);        // toujours tester la profondeur
-            glDepthMask(false);             // mais ne PAS écrire dans le depth buffer
+            glEnable(GL_DEPTH_TEST);
+            glDepthMask(false);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glLineWidth(2.5f);
             corps.setColor(1f, 0f, 0f, 1f);
             corps.render();
 
-            glDepthMask(true);              // réactiver écriture
+            glDepthMask(true);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            // remettre le model normal
-            shader.setUniformMat4f("model", model);
+            shader.setUniformMat4f("model", modelMatrix);
         }
-
 
         shader.unbind();
     }
 
-
     public Matrix4f getModelMatrix() {
-        return new Matrix4f()
-                .translate(position);
+        return modelMatrix;
     }
 
     public void cleanup() {
@@ -135,9 +135,7 @@ public class Ennemis {
     }
 
     public void decrementVie() {
-        if (vie > 0) {
-            vie--;
-        }
+        if (vie > 0) vie--;
     }
 
     public int getScore() {
