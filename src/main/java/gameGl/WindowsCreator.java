@@ -128,9 +128,11 @@ public class WindowsCreator {
 
         Crosshair crosshair = new Crosshair(crosshairShader);
 
-        // --- Pool fixe de balles ---
+        // --- Pool fixe de balles + liste des actives ---
         final int MAX_BALLS = 20;
         Ball[] balls = new Ball[MAX_BALLS];
+        ArrayList<Ball> activeBalls = new ArrayList<>(MAX_BALLS);
+
         for (int i = 0; i < MAX_BALLS; i++) {
             balls[i] = new Ball(ballShader, 0.2f);
         }
@@ -150,7 +152,6 @@ public class WindowsCreator {
             lastTime = currentTime;
 
             cmd.update();
-
             Matrix4f viewMatrix = camera.getViewMatrix();
 
             // --- Tir ---
@@ -158,22 +159,26 @@ public class WindowsCreator {
                 lastShootTime = currentTime;
                 Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
 
-                // Active la première balle inactive du pool
                 for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
+                        activeBalls.add(b); // ajout à la liste active
                         break;
                     }
                 }
             }
 
-            // --- Update & rendu des balles actives ---
-            for (Ball b : balls) {
-                if (!b.isActive()) continue;
-
+            // --- Update & rendu uniquement des balles actives ---
+            Iterator<Ball> it = activeBalls.iterator();
+            while (it.hasNext()) {
+                Ball b = it.next();
                 b.update(deltaTime);
                 b.render(viewMatrix, projection);
                 score += b.collisionScore(ennemis);
+
+                if (!b.isActive()) {
+                    it.remove(); // retirer si désactivée
+                }
             }
 
             // --- Update & rendu des ennemis ---
