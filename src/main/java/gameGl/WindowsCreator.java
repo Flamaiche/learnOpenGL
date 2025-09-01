@@ -131,14 +131,9 @@ public class WindowsCreator {
         // --- Pool fixe de balles ---
         final int MAX_BALLS = 20;
         Ball[] balls = new Ball[MAX_BALLS];
-        ArrayList<Ball> activeBalls = new ArrayList<>();
         for (int i = 0; i < MAX_BALLS; i++) {
             balls[i] = new Ball(ballShader, 0.2f);
         }
-
-        // --- Liste des ennemis actifs ---
-        ArrayList<Ennemis> activeEnnemis = new ArrayList<>();
-        for (Ennemis e : ennemis) activeEnnemis.add(e);
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -155,6 +150,7 @@ public class WindowsCreator {
             lastTime = currentTime;
 
             cmd.update();
+
             Matrix4f viewMatrix = camera.getViewMatrix();
 
             // --- Tir ---
@@ -162,39 +158,32 @@ public class WindowsCreator {
                 lastShootTime = currentTime;
                 Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
 
+                // Active la première balle inactive du pool
                 for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
-                        activeBalls.add(b);
                         break;
                     }
                 }
             }
 
-            // --- Update & rendu balles actives ---
-            Iterator<Ball> ballIt = activeBalls.iterator();
-            while (ballIt.hasNext()) {
-                Ball b = ballIt.next();
+            // --- Update & rendu des balles actives ---
+            for (Ball b : balls) {
+                if (!b.isActive()) continue;
+
                 b.update(deltaTime);
                 b.render(viewMatrix, projection);
-                score += b.collisionScore(activeEnnemis.toArray(new Ennemis[0]));
-                if (!b.isActive()) ballIt.remove();
+                score += b.collisionScore(ennemis);
             }
 
-            // --- Update & rendu ennemis actifs ---
-            Iterator<Ennemis> enemyIt = activeEnnemis.iterator();
-            while (enemyIt.hasNext()) {
-                Ennemis e = enemyIt.next();
+            // --- Update & rendu des ennemis ---
+            for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
                 e.render(viewMatrix, projection);
-
-                if (e.shouldDespawn(camera.getPosition())) {
-                    enemyIt.remove();
-                }
             }
 
             // --- Crosshair ---
-            crosshair.updateHighlightedEnemy(activeEnnemis.toArray(new Ennemis[0]), camera);
+            crosshair.updateHighlightedEnemy(ennemis, camera);
             crosshair.render(orthoProjection);
 
             // --- Texte ---
