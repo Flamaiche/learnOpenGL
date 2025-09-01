@@ -12,36 +12,20 @@ public class Crosshair {
 
     private final Shape shape;
     private final Shader shader;
-    private final Vector3f position = new Vector3f();
 
-    private final Shape rayShape;
-    private final Matrix4f rayModel = new Matrix4f();
-    private final Vector3f tmpVec = new Vector3f();
-    private final Vector3f camPos = new Vector3f();
+    // Rayon mathématique
+    private final Vector3f rayOrigin = new Vector3f();
+    private final Vector3f rayDir = new Vector3f();
 
     public Crosshair(Shader shader) {
         this.shader = shader;
 
-        // --- Crosshair visible ---
-        float len = 1.0f, gap = 0.5f, t = 0.12f;
+        // --- Crosshair 2D au centre de l'écran ---
+        float len = 0.05f, gap = 0.02f, t = 0.005f;
         float[] verts = createCrosshairPositions(len, gap, t);
         shape = new Shape(Shape.autoAddSlotColor(verts));
         shape.setColor(1f, 1f, 1f, 1f);
         shape.setShader(shader);
-
-        // --- Rayon ultra-fin ---
-        float w = 0.00001f, h = 0.00001f, l = 200f;
-        float[] rayVerts = new float[]{
-                -w/2, -h/2, 0f,
-                w/2, -h/2, 0f,
-                w/2,  h/2, 0f,
-                -w/2, -h/2, 0f,
-                w/2,  h/2, 0f,
-                -w/2,  h/2, l
-        };
-        rayShape = new Shape(Shape.autoAddSlotColor(rayVerts));
-        rayShape.setShader(shader);
-        rayShape.setColor(1f, 0f, 0f, 0f);
     }
 
     private static float[] createCrosshairPositions(float len, float gap, float t) {
@@ -66,62 +50,37 @@ public class Crosshair {
         idx[0] = i;
     }
 
-    public void setPosition(Vector3f p) { position.set(p); }
-
-    public void render(Matrix4f view, Matrix4f projection, Camera camera, float scale) {
-        Vector3f f = camera.getFront();
-        Vector3f u = camera.getUp();
-        Vector3f r = camera.getDroite();
-
-        Matrix4f model = new Matrix4f()
-                .identity()
-                .translate(position)
-                .m00(r.x).m01(r.y).m02(r.z)
-                .m10(u.x).m11(u.y).m12(u.z)
-                .m20(f.x).m21(f.y).m22(f.z)
-                .scale(scale);
-
+    /** Rendu du crosshair au centre de l'écran (2D) */
+    public void render(Matrix4f orthoProjection) {
         boolean depth = glIsEnabled(GL_DEPTH_TEST);
         if (depth) glDisable(GL_DEPTH_TEST);
 
         shader.bind();
+        Matrix4f model = new Matrix4f().identity();
         shader.setUniformMat4f("model", model);
-        shader.setUniformMat4f("view", view);
-        shader.setUniformMat4f("projection", projection);
+        shader.setUniformMat4f("view", new Matrix4f().identity());
+        shader.setUniformMat4f("projection", orthoProjection);
         shape.render();
         shader.unbind();
 
         if (depth) glEnable(GL_DEPTH_TEST);
     }
 
+    /** Met à jour l'ennemi le plus proche dans le centre de l'écran */
     public void updateHighlightedEnemy(Ennemis[] ennemis, Camera camera) {
         for (Ennemis e : ennemis) e.setHighlighted(false);
 
         Ennemis closest = null;
         float minDistance = Float.MAX_VALUE;
 
-        // Recalcule le rayon à CHAQUE frame
-        camPos.set(camera.getPosition());
-        Vector3f f = camera.getFront();
-        Vector3f u = camera.getUp();
-        Vector3f r = camera.getDroite();
+        rayOrigin.set(camera.getPosition());
+        rayDir.set(camera.getFront()).normalize();
 
-        rayModel.identity()
-                .translate(camPos)
-                .m00(r.x).m01(r.y).m02(r.z)
-                .m10(u.x).m11(u.y).m12(u.z)
-                .m20(f.x).m21(f.y).m22(f.z);
-
-        // Test de collision direct rayon <-> ennemis
         for (Ennemis e : ennemis) {
-            tmpVec.set(e.getModelMatrix().getTranslation(tmpVec)).sub(camPos);
-            float distance = tmpVec.length();
-
-            if (rayShape.intersectsOptimized(e.getCorps(), rayModel, e.getModelMatrix())) {
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closest = e;
-                }
+            float t = e.getCorps().intersectRayDistance(rayOrigin, rayDir, e.getModelMatrix());
+            if (t >= 0 && t < minDistance) {
+                minDistance = t;
+                closest = e;
             }
         }
 
@@ -130,6 +89,5 @@ public class Crosshair {
 
     public void cleanup() {
         shape.cleanup();
-        rayShape.cleanup();
     }
 }

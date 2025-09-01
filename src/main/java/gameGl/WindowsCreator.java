@@ -134,6 +134,9 @@ public class WindowsCreator {
         double lastTime = glfwGetTime();
         int score = 0;
 
+        // Projection orthographique pour le crosshair 2D
+        Matrix4f orthoProjection = new Matrix4f().ortho2D(-1, 1, -1, 1);
+
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -172,24 +175,13 @@ public class WindowsCreator {
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
                 e.render(camera.getViewMatrix(), projection);
-
-                if (e.shouldDespawn(camera.getPosition())) {
-                    e.setDeplacement(new float[]{
-                            camera.getPosition().x,
-                            camera.getPosition().y,
-                            camera.getPosition().z
-                    });
-                }
             }
 
             // --- Crosshair ---
-            Vector3f crossPos = new Vector3f(camera.getPosition())
-                    .add(new Vector3f(camera.getFront()).mul(0.5f));
-            crosshair.setPosition(crossPos);
-            crosshair.render(camera.getViewMatrix(), projection, camera, 0.02f);
             crosshair.updateHighlightedEnemy(ennemis, camera);
+            crosshair.render(orthoProjection);
 
-            // Texte du score
+            // --- Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
 
             glfwSwapBuffers(window);
@@ -202,7 +194,6 @@ public class WindowsCreator {
         crosshair.cleanup();
         Text.cleanup();
     }
-
 
     public static void main(String[] args) throws IOException {
         new WindowsCreator().run();

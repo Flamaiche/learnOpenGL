@@ -333,6 +333,59 @@ public class Shape {
         return false;
     }
 
+    // ----------------------
+// RAYON - SHAPE INTERSECTION
+// ----------------------
+    /**
+     * Teste si un rayon intersecte cette shape et renvoie la distance la plus proche.
+     * @return distance si intersection, sinon -1
+     */
+    public float intersectRayDistance(Vector3f origin, Vector3f dir, Matrix4f model) {
+        int vertexCount = vertices.length / FLOATS_PER_VERTEX;
+        float[] transformed = applyTransform(vertices, model);
+
+        float minT = Float.MAX_VALUE;
+        boolean hit = false;
+
+        for (int i = 0; i < vertexCount; i += 3) {
+            float[] v0 = {transformed[i*FLOATS_PER_VERTEX], transformed[i*FLOATS_PER_VERTEX+1], transformed[i*FLOATS_PER_VERTEX+2]};
+            float[] v1 = {transformed[(i+1)*FLOATS_PER_VERTEX], transformed[(i+1)*FLOATS_PER_VERTEX+1], transformed[(i+1)*FLOATS_PER_VERTEX+2]};
+            float[] v2 = {transformed[(i+2)*FLOATS_PER_VERTEX], transformed[(i+2)*FLOATS_PER_VERTEX+1], transformed[(i+2)*FLOATS_PER_VERTEX+2]};
+
+            float t = rayIntersectsTriangleDistance(origin, dir, v0, v1, v2);
+            if (t >= 0 && t < minT) {
+                minT = t;
+                hit = true;
+            }
+        }
+
+        return hit ? minT : -1f;
+    }
+
+    /** Renvoie la distance du rayon à l'intersection avec le triangle, ou -1 si pas de collision */
+    private float rayIntersectsTriangleDistance(Vector3f origin, Vector3f dir, float[] v0, float[] v1, float[] v2) {
+        Vector3f edge1 = new Vector3f(v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2]);
+        Vector3f edge2 = new Vector3f(v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2]);
+        Vector3f h = new Vector3f();
+        dir.cross(edge2, h);
+        float a = edge1.dot(h);
+        if (Math.abs(a) < 1e-6f) return -1; // parallèle
+
+        Vector3f s = new Vector3f(origin.x - v0[0], origin.y - v0[1], origin.z - v0[2]);
+        float f = 1.0f / a;
+        float u = f * s.dot(h);
+        if (u < 0.0f || u > 1.0f) return -1;
+
+        Vector3f q = new Vector3f();
+        s.cross(edge1, q);
+        float v = f * dir.dot(q);
+        if (v < 0.0f || u + v > 1.0f) return -1;
+
+        float t = f * edge2.dot(q);
+        return t > 0 ? t : -1;
+    }
+
+
     private float[] applyTransform(float[] vertices, Matrix4f model) {
         float[] transformed = vertices.clone();
         Vector3f tmp = new Vector3f();
