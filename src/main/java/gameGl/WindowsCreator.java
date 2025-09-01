@@ -116,7 +116,7 @@ public class WindowsCreator {
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader ballShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
         Shader crosshairShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
-        Shader textShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");
+        Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
 
         Ennemis[] ennemis = new Ennemis[2];
         for (int i = 0; i < ennemis.length; i++) {
@@ -125,7 +125,6 @@ public class WindowsCreator {
                     PreVerticesTable.generateCubeSimple(1f));
         }
 
-        // --- Crosshair avec pyramide de vision ---
         Crosshair crosshair = new Crosshair(crosshairShader);
 
         ArrayList<Ball> balls = new ArrayList<>();
@@ -187,28 +186,19 @@ public class WindowsCreator {
             Vector3f crossPos = new Vector3f(camera.getPosition())
                     .add(new Vector3f(camera.getFront()).mul(0.5f));
             crosshair.setPosition(crossPos);
+            crosshair.render(camera.getViewMatrix(), projection, camera, 0.02f);
+            crosshair.updateHighlightedEnemy(ennemis, camera);
 
-            crosshair.render(
-                    camera.getViewMatrix(),
-                    projection,
-                    camera,
-                    0.02f
-            );
+            // --- Texte 2D au-dessus ---
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            // --- Mise à jour de l'ennemi ciblé ---
-            crosshair.updateHighlightedEnemy(
-                    ennemis,
-                    camera
-            );
-
-            // --- Score + Texte ---
+            // Texte du score
             Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
 
-            int[] viewport = new int[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            int winWidth = viewport[2];
-            int winHeight = viewport[3];
-            Text.drawText(textShader, "CENTER", winWidth / 2f, winHeight / 2f, 3f, 1f, 1f, 5f);
+            glDisable(GL_BLEND);
+            glEnable(GL_DEPTH_TEST);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -220,6 +210,7 @@ public class WindowsCreator {
         crosshair.cleanup();
         Text.cleanup();
     }
+
 
     public static void main(String[] args) throws IOException {
         new WindowsCreator().run();

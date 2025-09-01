@@ -15,17 +15,12 @@ public class Shader {
     private int vertexShaderId;
     private int fragmentShaderId;
 
-    // Garder le code shader en mémoire
     private String vertexCode;
     private String fragmentCode;
 
-    // Constructeur : on donne les chemins des fichiers shader (relatifs dans resources)
     public Shader(String vertexPath, String fragmentPath) throws IOException {
-        // Lire les fichiers une fois et stocker le code
         vertexCode = readFileFromResources(vertexPath);
         fragmentCode = readFileFromResources(fragmentPath);
-
-        // Compiler et lier les shaders
         compile();
     }
 
@@ -49,7 +44,7 @@ public class Shader {
     }
 
     private void compile() {
-        // Créer et compiler le vertex shader
+        // Vertex shader
         vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShaderId, vertexCode);
         glCompileShader(vertexShaderId);
@@ -57,7 +52,7 @@ public class Shader {
             System.err.println("Erreur compilation vertex shader : " + glGetShaderInfoLog(vertexShaderId));
         }
 
-        // Créer et compiler le fragment shader
+        // Fragment shader
         fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShaderId, fragmentCode);
         glCompileShader(fragmentShaderId);
@@ -65,7 +60,7 @@ public class Shader {
             System.err.println("Erreur compilation fragment shader : " + glGetShaderInfoLog(fragmentShaderId));
         }
 
-        // Créer le programme, attacher les shaders et linker
+        // Programme
         programId = glCreateProgram();
         glAttachShader(programId, vertexShaderId);
         glAttachShader(programId, fragmentShaderId);
@@ -76,17 +71,14 @@ public class Shader {
         }
     }
 
-    // Activer ce shader pour dessiner
     public void bind() {
         glUseProgram(programId);
     }
 
-    // Désactiver les shaders (utiliser programme par défaut)
     public void unbind() {
         glUseProgram(0);
     }
 
-    // Nettoyer toutes les ressources
     public void cleanup() {
         unbind();
         glDetachShader(programId, vertexShaderId);
@@ -98,8 +90,31 @@ public class Shader {
 
     public void setUniformMat4f(String name, Matrix4f matrix) {
         int location = glGetUniformLocation(programId, name);
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-        matrix.get(buffer);
-        glUniformMatrix4fv(location, false, buffer);
+        if (location != -1) {
+            FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
+            matrix.get(buffer);
+            glUniformMatrix4fv(location, false, buffer);
+        }
+    }
+
+    public void setUniform1f(String name, float value) {
+        int location = glGetUniformLocation(programId, name);
+        if (location != -1) {
+            glUniform1f(location, value);
+        }
+    }
+
+    public void setUniform2f(String name, float x, float y) {
+        int location = glGetUniformLocation(programId, name);
+        if (location != -1) {
+            glUniform2f(location, x, y);
+        }
+    }
+
+    public void setUniform3f(String name, float x, float y, float z) {
+        int location = glGetUniformLocation(programId, name);
+        if (location != -1) {
+            glUniform3f(location, x, y, z);
+        }
     }
 }

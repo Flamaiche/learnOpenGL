@@ -5,7 +5,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBEasyFont;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -29,35 +28,30 @@ public class Text {
         if (text == null || text.isEmpty()) return;
         init();
 
-        ByteBuffer charBuffer = BufferUtils.createByteBuffer(99999);
-        int quads = STBEasyFont.stb_easy_font_print(0, 0, text, null, charBuffer);
-        FloatBuffer fb = charBuffer.asFloatBuffer();
+        // Génère les quads avec STB Easy Font
+        ByteBuffer buffer = BufferUtils.createByteBuffer(text.length() * 270);
+        int quads = STBEasyFont.stb_easy_font_print(0, 0, text, null, buffer);
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, fb, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_DYNAMIC_DRAW);
 
         glEnableVertexAttribArray(0);
+        // ⚠️ STB EasyFont génère 4 floats par vertex : x, y, z, color
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 16, 0);
 
         shader.bind();
 
-        // Projection ortho dynamique
-        int[] viewport = new int[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        int winWidth = viewport[2];
-        int winHeight = viewport[3];
+        // Projection ortho
+        int[] vp = new int[4];
+        glGetIntegerv(GL_VIEWPORT, vp);
+        int winW = vp[2], winH = vp[3];
+        shader.setUniformMat4f("projection", new Matrix4f().ortho2D(0f, winW, winH, 0f));
 
-        Matrix4f ortho = new Matrix4f().ortho(0f, winWidth, winHeight, 0f, -1f, 1f);
-        shader.setUniformMat4f("projection", ortho);
-
-        int locOffset = glGetUniformLocation(shader.getProgramId(), "offset");
-        int locScale = glGetUniformLocation(shader.getProgramId(), "scale");
-        int locColor = glGetUniformLocation(shader.getProgramId(), "textColor");
-
-        glUniform2f(locOffset, x, y);
-        glUniform1f(locScale, scale);
-        glUniform3f(locColor, r, g, b);
+        // Uniforms
+        shader.setUniform2f("offset", x, y);
+        shader.setUniform1f("scale", scale);
+        shader.setUniform3f("textColor", r, g, b);
 
         glDrawArrays(GL_QUADS, 0, quads * 4);
 
