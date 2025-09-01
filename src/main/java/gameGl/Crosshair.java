@@ -24,7 +24,7 @@ public class Crosshair {
         float len = 0.05f, gap = 0.02f, t = 0.005f;
         float[] verts = createCrosshairPositions(len, gap, t);
         shape = new Shape(Shape.autoAddSlotColor(verts));
-        shape.setColor(1f, 1f, 1f, 1f);
+        shape.setColor(1f, 0f, 1f, 1f); // violet opaque
         shape.setShader(shader);
     }
 
