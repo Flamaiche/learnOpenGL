@@ -6,8 +6,8 @@ import org.joml.Vector3f;
 public class Commande {
     private Camera camera;
     private long window;
-    private float vitesse = 0.05f;
-    private float vitesseRotation = 2.0f;
+    public static float vitesse = 0.05f;
+    public static float vitesseRotation = 2.0f;
 
     public Commande(Camera camera, long window) {
         this.camera = camera;
