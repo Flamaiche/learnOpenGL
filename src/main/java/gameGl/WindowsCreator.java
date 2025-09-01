@@ -128,16 +128,19 @@ public class WindowsCreator {
 
         Crosshair crosshair = new Crosshair(crosshairShader);
 
-        // --- Pool de balles limité ---
+        // --- Pool fixe de balles ---
         final int MAX_BALLS = 20;
-        ArrayList<Ball> balls = new ArrayList<>(MAX_BALLS);
+        Ball[] balls = new Ball[MAX_BALLS];
+        for (int i = 0; i < MAX_BALLS; i++) {
+            balls[i] = new Ball(ballShader, 0.2f);
+        }
+
         double lastShootTime = 0;
         double shootCooldown = 0.3;
 
         double lastTime = glfwGetTime();
         int score = 0;
 
-        // Projection orthographique pour le crosshair 2D
         Matrix4f orthoProjection = new Matrix4f().ortho2D(-1, 1, -1, 1);
 
         while (!glfwWindowShouldClose(window)) {
@@ -153,31 +156,27 @@ public class WindowsCreator {
             Matrix4f viewMatrix = camera.getViewMatrix();
 
             // --- Tir ---
-            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-                if (currentTime - lastShootTime >= shootCooldown && balls.size() < MAX_BALLS) {
-                    lastShootTime = currentTime;
-                    Vector3f spawnPos = new Vector3f(camera.getPosition())
-                            .add(new Vector3f(camera.getFront()).mul(0.5f));
-                    float baseSize = 0.2f;
-                    balls.add(new Ball(ballShader, spawnPos, new Vector3f(camera.getFront()), baseSize));
+            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && currentTime - lastShootTime >= shootCooldown) {
+                lastShootTime = currentTime;
+                Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
+
+                // Active la première balle inactive du pool
+                for (Ball b : balls) {
+                    if (!b.isActive()) {
+                        b.activate(spawnPos, camera.getFront());
+                        break;
+                    }
                 }
             }
 
-            // --- Update balls ---
-            Iterator<Ball> it = balls.iterator();
-            while (it.hasNext()) {
-                Ball b = it.next();
+            // --- Update & rendu des balles ---
+            for (Ball b : balls) {
                 b.update(deltaTime);
                 b.render(viewMatrix, projection);
                 score += b.collisionScore(ennemis);
-
-                if (b.shouldDespawn(camera.getPosition())) {
-                    b.cleanup();
-                    it.remove();
-                }
             }
 
-            // --- Update ennemis ---
+            // --- Update & rendu des ennemis ---
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
                 e.render(viewMatrix, projection);
