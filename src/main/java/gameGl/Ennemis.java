@@ -19,8 +19,8 @@ public class Ennemis {
     private Vector3f position;
     private Vector3f direction;
     private Vector3f target;
-    private float speed = 2.5f;
-    private float despawnDistance = 150f;
+    public static float speed = 2.5f;
+    public static float despawnDistance = 150f;
     private boolean highlighted = false;
 
     private int vie;
@@ -73,7 +73,7 @@ public class Ennemis {
     public void deplacement(float deltaTime) {
         Vector3f deplace = new Vector3f(direction).mul(speed * deltaTime);
         position.add(deplace);
-        updateModelMatrix(); // ✅ Mise à jour à chaque frame
+        updateModelMatrix(); // Mise à jour à chaque frame
     }
 
     private void updateModelMatrix() {
@@ -148,5 +148,13 @@ public class Ennemis {
 
     public void setHighlighted(boolean h) {
         this.highlighted = h;
+    }
+
+    public static void setDespawnDistance(float d) {
+        despawnDistance = d;
+    }
+
+    public static void setSpeed(float s) {
+        speed = s;
     }
 }
