@@ -128,14 +128,17 @@ public class WindowsCreator {
 
         Crosshair crosshair = new Crosshair(crosshairShader);
 
-        // --- Pool fixe de balles + liste des actives ---
+        // --- Pool fixe de balles ---
         final int MAX_BALLS = 20;
         Ball[] balls = new Ball[MAX_BALLS];
-        ArrayList<Ball> activeBalls = new ArrayList<>(MAX_BALLS);
-
+        ArrayList<Ball> activeBalls = new ArrayList<>();
         for (int i = 0; i < MAX_BALLS; i++) {
             balls[i] = new Ball(ballShader, 0.2f);
         }
+
+        // --- Liste des ennemis actifs ---
+        ArrayList<Ennemis> activeEnnemis = new ArrayList<>();
+        for (Ennemis e : ennemis) activeEnnemis.add(e);
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -162,33 +165,36 @@ public class WindowsCreator {
                 for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
-                        activeBalls.add(b); // ajout à la liste active
+                        activeBalls.add(b);
                         break;
                     }
                 }
             }
 
-            // --- Update & rendu uniquement des balles actives ---
-            Iterator<Ball> it = activeBalls.iterator();
-            while (it.hasNext()) {
-                Ball b = it.next();
+            // --- Update & rendu balles actives ---
+            Iterator<Ball> ballIt = activeBalls.iterator();
+            while (ballIt.hasNext()) {
+                Ball b = ballIt.next();
                 b.update(deltaTime);
                 b.render(viewMatrix, projection);
-                score += b.collisionScore(ennemis);
+                score += b.collisionScore(activeEnnemis.toArray(new Ennemis[0]));
+                if (!b.isActive()) ballIt.remove();
+            }
 
-                if (!b.isActive()) {
-                    it.remove(); // retirer si désactivée
+            // --- Update & rendu ennemis actifs ---
+            Iterator<Ennemis> enemyIt = activeEnnemis.iterator();
+            while (enemyIt.hasNext()) {
+                Ennemis e = enemyIt.next();
+                e.deplacement(deltaTime);
+                e.render(viewMatrix, projection);
+
+                if (e.shouldDespawn(camera.getPosition())) {
+                    enemyIt.remove();
                 }
             }
 
-            // --- Update & rendu des ennemis ---
-            for (Ennemis e : ennemis) {
-                e.deplacement(deltaTime);
-                e.render(viewMatrix, projection);
-            }
-
             // --- Crosshair ---
-            crosshair.updateHighlightedEnemy(ennemis, camera);
+            crosshair.updateHighlightedEnemy(activeEnnemis.toArray(new Ennemis[0]), camera);
             crosshair.render(orthoProjection);
 
             // --- Texte ---
