@@ -17,9 +17,9 @@ public class Ball {
     private final Vector3f rotation = new Vector3f();
     private final Vector3f rotationSpeed = new Vector3f();
 
-    private float speed = 25f;
-    private float maxDistance = 150f;
-    private float rotationMultiplier = 2f;
+    public static float speed = 25f;
+    public static float maxDistance = 150f;
+    public static float rotationMultiplier = 2f;
 
     private boolean active = false;
     private final Random rand = new Random();
@@ -130,5 +130,17 @@ public class Ball {
             }
         }
         return false;
+    }
+
+    public static void setMaxDistance(float maxDistance) {
+        Ball.maxDistance = maxDistance;
+    }
+
+    public static void setSpeed(float speed) {
+        Ball.speed = speed;
+    }
+
+    public static void setRotationMultiplier(float rotationMultiplier) {
+        Ball.rotationMultiplier = rotationMultiplier;
     }
 }

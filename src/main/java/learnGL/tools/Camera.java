@@ -21,6 +21,9 @@ public class Camera {
     private float orbitPhi = 0f;     // élévation (radians)
     private float orbitRadius = 1f;  // distance à la cible
 
+    private float renderDistance = 100f;
+    private float renderSimulation = 150f;
+
     public Camera(Vector3f position) {
         this.position = new Vector3f(position);
         this.front = new Vector3f(0, 0, -1);
@@ -176,4 +179,14 @@ public class Camera {
         this.angleVertical = pitchDeg;
         updateCameraVectors();
     }
+
+    public float distanceTo(Vector3f point) {
+        return position.distance(point);
+    }
+
+    public float getRenderDistance() { return renderDistance; }
+    public void setRenderDistance(float d) { renderDistance = d; }
+
+    public float getRenderSimulation() { return renderSimulation; }
+    public void setRenderSimulation(float s) { renderSimulation = s; }
 }
