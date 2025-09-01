@@ -189,16 +189,8 @@ public class WindowsCreator {
             crosshair.render(camera.getViewMatrix(), projection, camera, 0.02f);
             crosshair.updateHighlightedEnemy(ennemis, camera);
 
-            // --- Texte 2D au-dessus ---
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
             // Texte du score
             Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
-
-            glDisable(GL_BLEND);
-            glEnable(GL_DEPTH_TEST);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

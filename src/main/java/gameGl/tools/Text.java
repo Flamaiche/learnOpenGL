@@ -21,14 +21,17 @@ public class Text {
         vbo = glGenBuffers();
         initialized = true;
     }
-
     public static void drawText(Shader shader, String text,
                                 float x, float y, float scale,
                                 float r, float g, float b) {
         if (text == null || text.isEmpty()) return;
         init();
 
-        // Génère les quads avec STB Easy Font
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // STB Easy Font
         ByteBuffer buffer = BufferUtils.createByteBuffer(text.length() * 270);
         int quads = STBEasyFont.stb_easy_font_print(0, 0, text, null, buffer);
 
@@ -37,7 +40,6 @@ public class Text {
         glBufferData(GL_ARRAY_BUFFER, buffer, GL_DYNAMIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        // ⚠️ STB EasyFont génère 4 floats par vertex : x, y, z, color
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 16, 0);
 
         shader.bind();
@@ -48,18 +50,22 @@ public class Text {
         int winW = vp[2], winH = vp[3];
         shader.setUniformMat4f("projection", new Matrix4f().ortho2D(0f, winW, winH, 0f));
 
-        // Uniforms
         shader.setUniform2f("offset", x, y);
         shader.setUniform1f("scale", scale);
         shader.setUniform3f("textColor", r, g, b);
 
         glDrawArrays(GL_QUADS, 0, quads * 4);
 
+        shader.unbind();
         glDisableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-        shader.unbind();
+
+        // Restaure état OpenGL
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
     }
+
 
     public static void cleanup() {
         if (!initialized) return;
