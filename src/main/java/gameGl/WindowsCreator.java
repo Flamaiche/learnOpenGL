@@ -137,7 +137,6 @@ public class WindowsCreator {
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
-
         double lastTime = glfwGetTime();
         int score = 0;
 
@@ -152,7 +151,6 @@ public class WindowsCreator {
 
             cmd.update();
 
-            // Calcul de la viewMatrix une seule fois
             Matrix4f viewMatrix = camera.getViewMatrix();
 
             // --- Tir ---
@@ -169,8 +167,10 @@ public class WindowsCreator {
                 }
             }
 
-            // --- Update & rendu des balles ---
+            // --- Update & rendu des balles actives ---
             for (Ball b : balls) {
+                if (!b.isActive()) continue;
+
                 b.update(deltaTime);
                 b.render(viewMatrix, projection);
                 score += b.collisionScore(ennemis);

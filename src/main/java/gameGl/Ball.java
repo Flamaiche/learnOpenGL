@@ -21,7 +21,7 @@ public class Ball {
     private float maxDistance = 150f;
     private float rotationMultiplier = 2f;
 
-    private boolean active = false;
+    private boolean active = false; // état actif ou non
     private final Random rand = new Random();
 
     public Ball(Shader shader, float baseSize) {
@@ -36,20 +36,27 @@ public class Ball {
         position.set(startPos);
         direction.set(forwardDir).normalize();
 
-        rotation.set(0f,0f,0f);
+        rotation.set(0f, 0f, 0f);
         rotationSpeed.set(
-                rand.nextFloat()*720f - 360f,
-                rand.nextFloat()*720f - 360f,
-                rand.nextFloat()*720f - 360f
+                rand.nextFloat() * 720f - 360f,
+                rand.nextFloat() * 720f - 360f,
+                rand.nextFloat() * 720f - 360f
         );
 
         active = true;
     }
 
+    /** Désactive la balle (pour le pool) */
+    public void deactivate() {
+        active = false;
+    }
+
+    /** Vérifie si la balle est active */
     public boolean isActive() {
         return active;
     }
 
+    /** Mise à jour de la position et rotation */
     public void update(float deltaTime) {
         if (!active) return;
 
@@ -59,9 +66,10 @@ public class Ball {
         rotation.y += rotationSpeed.y * deltaTime * rotationMultiplier;
         rotation.z += rotationSpeed.z * deltaTime * rotationMultiplier;
 
-        if (position.length() > maxDistance) active = false; // auto-desactivation
+        if (position.length() > maxDistance) active = false; // auto-désactivation si trop loin
     }
 
+    /** Rendu de la balle */
     public void render(Matrix4f view, Matrix4f projection) {
         if (!active) return;
 
@@ -75,14 +83,16 @@ public class Ball {
         shader.unbind();
     }
 
+    /** Matrice de transformation pour le rendu */
     public Matrix4f getModelMatrix() {
         return new Matrix4f()
                 .translate(position)
-                .rotateX((float)Math.toRadians(rotation.x))
-                .rotateY((float)Math.toRadians(rotation.y))
-                .rotateZ((float)Math.toRadians(rotation.z));
+                .rotateX((float) Math.toRadians(rotation.x))
+                .rotateY((float) Math.toRadians(rotation.y))
+                .rotateZ((float) Math.toRadians(rotation.z));
     }
 
+    /** Libération des ressources */
     public void cleanup() {
         corps.cleanup();
     }
@@ -101,17 +111,18 @@ public class Ball {
         return score;
     }
 
+    /** Vérifie collision et décrémente vie ennemis */
     private boolean haveDestroyed(Ennemis enemy, Matrix4f ballModel) {
         Matrix4f enemyModel = enemy.getModelMatrix();
         if (enemy.getCorps().intersectsOptimized(corps, ballModel, enemyModel)) {
             enemy.decrementVie();
             if (enemy.getVie() <= 0) {
                 enemy.setDeplacement(new float[]{
-                        enemy.getDespawnDistance()*2,
-                        enemy.getDespawnDistance()*2,
-                        enemy.getDespawnDistance()*2
+                        enemy.getDespawnDistance() * 2,
+                        enemy.getDespawnDistance() * 2,
+                        enemy.getDespawnDistance() * 2
                 });
-                active = false;
+                active = false; // désactive la balle après destruction
                 return true;
             }
         }
