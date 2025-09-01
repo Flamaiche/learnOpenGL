@@ -334,16 +334,34 @@ public class Shape {
     }
 
     // ----------------------
-// RAYON - SHAPE INTERSECTION
-// ----------------------
+    // RAYON - SHAPE INTERSECTION
+    // ----------------------
     /**
      * Teste si un rayon intersecte cette shape et renvoie la distance la plus proche.
+     * Utilise un early-out avec la bounding box pour optimiser.
      * @return distance si intersection, sinon -1
      */
     public float intersectRayDistance(Vector3f origin, Vector3f dir, Matrix4f model) {
-        int vertexCount = vertices.length / FLOATS_PER_VERTEX;
+        // Transforme tous les sommets
         float[] transformed = applyTransform(vertices, model);
+        int vertexCount = transformed.length / FLOATS_PER_VERTEX;
 
+        // Calcul bounding box
+        float[] min = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] max = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+
+        for (int i = 0; i < vertexCount; i++) {
+            for (int j = 0; j < 3; j++) {
+                float v = transformed[i * FLOATS_PER_VERTEX + j];
+                min[j] = Math.min(min[j], v);
+                max[j] = Math.max(max[j], v);
+            }
+        }
+
+        // Early-out : test rapide rayon-AABB
+        if (!rayIntersectsAABB(origin, dir, min, max)) return -1f;
+
+        // Test triangle par triangle si le rayon touche la box
         float minT = Float.MAX_VALUE;
         boolean hit = false;
 
@@ -361,6 +379,28 @@ public class Shape {
 
         return hit ? minT : -1f;
     }
+
+    /** Test simple d'intersection rayon-AABB */
+    private boolean rayIntersectsAABB(Vector3f origin, Vector3f dir, float[] min, float[] max) {
+        float tmin = (min[0] - origin.x) / dir.x;
+        float tmax = (max[0] - origin.x) / dir.x;
+        if (tmin > tmax) { float tmp = tmin; tmin = tmax; tmax = tmp; }
+
+        float tymin = (min[1] - origin.y) / dir.y;
+        float tymax = (max[1] - origin.y) / dir.y;
+        if (tymin > tymax) { float tmp = tymin; tymin = tymax; tymax = tmp; }
+
+        if ((tmin > tymax) || (tymin > tmax)) return false;
+        tmin = Math.max(tmin, tymin);
+        tmax = Math.min(tmax, tymax);
+
+        float tzmin = (min[2] - origin.z) / dir.z;
+        float tzmax = (max[2] - origin.z) / dir.z;
+        if (tzmin > tzmax) { float tmp = tzmin; tzmin = tzmax; tzmax = tmp; }
+
+        return !(tmin > tzmax || tzmin > tmax);
+    }
+
 
     /** Renvoie la distance du rayon à l'intersection avec le triangle, ou -1 si pas de collision */
     private float rayIntersectsTriangleDistance(Vector3f origin, Vector3f dir, float[] v0, float[] v1, float[] v2) {
