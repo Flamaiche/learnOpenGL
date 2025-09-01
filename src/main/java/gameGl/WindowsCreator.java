@@ -128,8 +128,9 @@ public class WindowsCreator {
 
         Crosshair crosshair = new Crosshair(crosshairShader);
 
-        ArrayList<Ball> balls = new ArrayList<>();
-        final int MAX_BALLS = 20; // 🔹 limite max de balles
+        // --- Pool de balles limité ---
+        final int MAX_BALLS = 20;
+        ArrayList<Ball> balls = new ArrayList<>(MAX_BALLS);
         double lastShootTime = 0;
         double shootCooldown = 0.3;
 
@@ -148,8 +149,8 @@ public class WindowsCreator {
 
             cmd.update();
 
-            // 🔹 Calcul une seule fois par frame
-            Matrix4f view = camera.getViewMatrix();
+            // Calcul de la viewMatrix une seule fois
+            Matrix4f viewMatrix = camera.getViewMatrix();
 
             // --- Tir ---
             if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -167,7 +168,7 @@ public class WindowsCreator {
             while (it.hasNext()) {
                 Ball b = it.next();
                 b.update(deltaTime);
-                b.render(view, projection);
+                b.render(viewMatrix, projection);
                 score += b.collisionScore(ennemis);
 
                 if (b.shouldDespawn(camera.getPosition())) {
@@ -179,7 +180,7 @@ public class WindowsCreator {
             // --- Update ennemis ---
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
-                e.render(view, projection);
+                e.render(viewMatrix, projection);
             }
 
             // --- Crosshair ---
