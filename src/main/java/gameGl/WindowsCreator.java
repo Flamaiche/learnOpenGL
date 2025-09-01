@@ -118,7 +118,7 @@ public class WindowsCreator {
         Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
 
         Ennemis.setDespawnDistance(camera.getRenderSimulation());
-        Ennemis[] ennemis = new Ennemis[2];
+        Ennemis[] ennemis = new Ennemis[10];
         for (int i = 0; i < ennemis.length; i++) {
             ennemis[i] = new Ennemis(ennemisShader,
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
@@ -179,7 +179,7 @@ public class WindowsCreator {
             // --- Update & rendu des ennemis ---
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
-                e.render(viewMatrix, projection);
+                if(e.isInView(camera)) e.render(viewMatrix, projection);
             }
 
             // --- Crosshair ---
@@ -187,7 +187,7 @@ public class WindowsCreator {
             crosshair.render(orthoProjection);
 
             // --- Texte ---
-            Text.drawText(textShader, "Score: " + score, 20, 30, 2f, 1f, 0f, 0f);
+            Text.drawText(textShader, "Score: " + score, 20, 30, 2.5f, 1f, 0f, 0f);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
