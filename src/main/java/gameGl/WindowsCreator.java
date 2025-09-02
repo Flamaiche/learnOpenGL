@@ -1,9 +1,6 @@
 package gameGl;
 
-import gameGl.tools.Manager2D;
-import gameGl.tools.Manager3D;
-import gameGl.tools.PreVerticesTable;
-import gameGl.tools.Text;
+import gameGl.tools.*;
 import gameGl.utils.*;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
@@ -113,7 +110,7 @@ public class WindowsCreator {
                     PreVerticesTable.generateCubeSimple(1f)));
         }
 
-        // --- Crosshair ---
+        // --- Crosshair 2D ---
         ArrayList<Entity2D> uiElements = new ArrayList<>();
         Crosshair crosshair = new Crosshair(crosshairShader);
         uiElements.add(crosshair);
@@ -125,6 +122,10 @@ public class WindowsCreator {
         for (int i = 0; i < MAX_BALLS; i++) {
             balls.add(new Ball(ballShader, 0.35f));
         }
+
+        // --- TextManager pour HUD & debug ---
+        TextManager hud = new TextManager();
+        hud.setDebugMode(!true); // true = affiche balls/ennemis actifs pour debug
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -150,8 +151,7 @@ public class WindowsCreator {
                 lastShootTime = currentTime;
                 Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
 
-                for (int i = 0; i < balls.size(); i++) {
-                    Ball b = balls.get(i);
+                for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
                         break;
@@ -160,7 +160,7 @@ public class WindowsCreator {
             }
 
             // --- Update & rendu 3D via Manager3D ---
-            score += Manager3D.updateAll(ennemis, balls, deltaTime);
+            score += Manager3D.updateAll(ennemis, balls, deltaTime, camera.getPosition());
             Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
             // --- Update & rendu 2D via Manager2D ---
@@ -168,8 +168,31 @@ public class WindowsCreator {
             Manager2D.updateAll(uiElements);
             Manager2D.renderAll(uiElements, orthoProjection);
 
-            // --- Texte ---
-            Text.drawText(textShader, "Score: " + score, 20, 30, 2.5f, 1f, 0f, 0f);
+            // --- Mise à jour HUD / debug ---
+            int activeBalls = 0;
+            for (Ball b : balls) if (b.isActive()) activeBalls++;
+            int activeEnemies = 0;
+            for (Ennemis e : ennemis) if (e.isAlive()) activeEnemies++; // supposons méthode isAlive()
+
+            // Calcul distance cible
+            float distanceTarget = 0;
+            for (Ennemis e : ennemis) {
+                if (e.isHighlighted()) {
+                    distanceTarget = camera.getPosition().distance(e.getPosition());
+                    break;
+                }
+            }
+
+            float fps = 1f / deltaTime;
+
+            hud.update(score, fps,
+                    camera.getPosition().x, camera.getPosition().y, camera.getPosition().z,
+                    camera.getPitch(), camera.getYaw(), camera.getRoll(),
+                    activeBalls, balls.size(),
+                    activeEnemies, ennemis.size(),
+                    distanceTarget);
+
+            hud.render(textShader);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

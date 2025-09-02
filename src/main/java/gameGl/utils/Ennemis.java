@@ -6,12 +6,13 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import java.util.Random;
 
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class Ennemis extends Entity {
     private static Random rand = new Random();
     private float spawnSize = 10f;
-    private float exclusionSize = 0f;
+    private float exclusionSize = 5f;
 
     private Shape corps;
     private Shader shader;
@@ -22,8 +23,12 @@ public class Ennemis extends Entity {
     public static float despawnDistance = 150f;
     private boolean highlighted = false;
 
-    private int vie = 1;
+    public final int MAX_VIE = 1;
+    private int vie = MAX_VIE;
     private int score = 10;
+    private final float RESPAWN_TIME = 5f;
+    private float respawnTimer = 0f;
+    private float deathTime = -1f;
 
     public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
         corps = new Shape(Shape.autoAddSlotColor(verticesShape));
@@ -57,7 +62,24 @@ public class Ennemis extends Entity {
         return new float[]{x,y,z};
     }
 
+    public boolean shouldDespawn(Vector3f cameraPos) {
+        return position.distance(cameraPos) > despawnDistance;
+    }
+
     public void update(float deltaTime) {
+        if (vie <= 0) {
+            if (deathTime < 0) {
+                deathTime = (float) glfwGetTime(); // on note le moment de la mort
+            } else {
+                float currentTime = (float) glfwGetTime();
+                if (currentTime - deathTime >= RESPAWN_TIME) {
+                    resetVie();
+                    deathTime = -1f; // on réinitialise
+                }
+            }
+            return; // pas de déplacement tant qu'il est mort
+        }
+
         Vector3f deplace = new Vector3f(direction).mul(speed * deltaTime);
         position.add(deplace);
         updateModelMatrix();
@@ -101,10 +123,21 @@ public class Ennemis extends Entity {
     public Shape getCorps() { return corps; }
     public int getVie() { return vie; }
     public void decrementVie() { if (vie>0) vie--; }
+    public void resetVie() { vie = MAX_VIE; }
     public int getScore() { return score; }
     public float getDespawnDistance() { return despawnDistance; }
     public void setHighlighted(boolean h) { highlighted = h; }
 
     public static void setDespawnDistance(float d) { despawnDistance = d; }
     public static void setSpeed(float s) { speed = s; }
+
+    public boolean isHighlighted() {
+        return highlighted;
+    }
+
+    public boolean isAlive() {
+        return vie > 0;
+    }
+
+    public Vector3f getPosition() { return position;}
 }

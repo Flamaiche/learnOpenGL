@@ -207,4 +207,8 @@ public class Camera {
                 renderDistance
         );
     }
+    // pas de gyroscope, pas d'inclinaison latérale
+    public float getRoll() {
+        return 0f; // pas utilisé dans ce jeu
+    }
 }

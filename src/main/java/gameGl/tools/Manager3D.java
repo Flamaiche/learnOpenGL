@@ -3,6 +3,8 @@ package gameGl.tools;
 import gameGl.utils.Ball;
 import gameGl.utils.Ennemis;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
 import java.util.ArrayList;
 
 public class Manager3D {
@@ -10,10 +12,13 @@ public class Manager3D {
     private Manager3D() {}
 
     // Update toutes les entités et retourne le score gagné
-    public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, float deltaTime) {
+    public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, float deltaTime, Vector3f playerPos) {
         int score = 0;
 
         for (Ennemis e : ennemis) {
+            if (e.shouldDespawn(playerPos)) {
+                e.setDeplacement(new float[]{0f,0f,0f});
+            }
             e.update(deltaTime);
         }
 
@@ -21,6 +26,7 @@ public class Manager3D {
             if (!b.isActive()) continue;
 
             b.update(deltaTime);
+
             score += b.collisionScore(ennemis.toArray(new Ennemis[0]));
         }
 
