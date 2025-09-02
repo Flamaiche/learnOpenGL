@@ -18,7 +18,6 @@ public class Manager3D {
             e.update(deltaTime);
 
             if (e instanceof Ball b) {
-                // Score et collisions avec les ennemis
                 score += b.collisionScore(enemies.toArray(new Ennemis[0]));
             }
         }

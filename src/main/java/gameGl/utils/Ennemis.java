@@ -10,12 +10,12 @@ import java.util.Random;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class Ennemis extends Entity {
-    private final Random rand = new Random();
-    private final float spawnSize = 10.0f;
-    private final float exclusionSize = 0.0f;
+    private Random rand = new Random();
+    private float spawnSize = 10.0f;
+    private float exclusionSize = 0.0f;
 
-    private final Shape corps;
-    private final Shader shader;
+    private Shape corps;
+    private Shader shader;
     private Vector3f position;
     private Vector3f direction;
     private Vector3f target;
@@ -38,7 +38,7 @@ public class Ennemis extends Entity {
         score = 10;
 
         setDeplacement(centerPlayer);
-        updateModelMatrix();
+        updateModelMatrix(); // initialisation
     }
 
     public void setDeplacement(float[] centerPlayer) {
@@ -49,6 +49,8 @@ public class Ennemis extends Entity {
         target = new Vector3f(targetCoords[0], targetCoords[1], targetCoords[2]);
 
         direction = new Vector3f(target).sub(position).normalize();
+        System.out.println(target + " "  + position + " " + direction);
+
         updateModelMatrix();
     }
 

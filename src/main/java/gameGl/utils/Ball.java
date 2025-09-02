@@ -95,6 +95,12 @@ public class Ball extends Entity {
     }
 
     @Override
+    public Matrix4f getModelMatrix() {
+        if (modelDirty) updateModelMatrix();
+        return modelMatrix;
+    }
+
+    @Override
     public void cleanup() {
         corps.cleanup();
     }
@@ -124,17 +130,11 @@ public class Ball extends Entity {
                         enemy.getDespawnDistance() * 2,
                         enemy.getDespawnDistance() * 2
                 });
-                // Note : la balle reste active pour toucher d'autres ennemis
+                active = false; // <- pool : la balle devient réutilisable
                 return true;
             }
         }
         return false;
-    }
-
-    @Override
-    public Matrix4f getModelMatrix() {
-        if (modelDirty) updateModelMatrix();
-        return modelMatrix;
     }
 
     public static void setMaxDistance(float maxDistance) {
