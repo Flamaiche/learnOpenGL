@@ -2,37 +2,26 @@ package gameGl.utils;
 
 import gameGl.tools.PreVerticesTable;
 import learnGL.tools.Shader;
-import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.Random;
 
-public class Ball {
-    private final Shape corps;
-    private final Shader shader;
-
-    private final Vector3f position = new Vector3f();
+public class Ball extends Entity {
     private final Vector3f direction = new Vector3f();
     private final Vector3f rotation = new Vector3f();
     private final Vector3f rotationSpeed = new Vector3f();
+    private boolean active = false;
 
     public static float speed = 25f;
     public static float maxDistance = 150f;
     public static float rotationMultiplier = 2f;
 
-    private boolean active = false;
     private final Random rand = new Random();
 
-    // Stocke la matrice pour éviter de la recalculer à chaque render
-    private final Matrix4f modelMatrix = new Matrix4f();
-    private boolean modelDirty = true;
-
     public Ball(Shader shader, float baseSize) {
-        this.shader = shader;
-        corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generatePyramid(baseSize)));
+        super(shader, PreVerticesTable.generatePyramid(baseSize));
         corps.setColor(1f, 0f, 0f, 1f);
-        corps.setShader(shader);
     }
 
     public void activate(Vector3f startPos, Vector3f forwardDir) {
@@ -47,7 +36,7 @@ public class Ball {
         );
 
         active = true;
-        modelDirty = true; // on doit recalculer la matrice
+        modelDirty = true;
     }
 
     public void deactivate() {
@@ -58,6 +47,7 @@ public class Ball {
         return active;
     }
 
+    @Override
     public void update(float deltaTime) {
         if (!active) return;
 
@@ -68,38 +58,17 @@ public class Ball {
 
         if (position.length() > maxDistance) active = false;
 
-        modelDirty = true; // la position/rotation a changé
+        modelDirty = true;
     }
 
-    public void render(Matrix4f view, Matrix4f projection) {
-        if (!active) return;
-
-        if (modelDirty) updateModelMatrix();
-
-        shader.bind();
-        shader.setUniformMat4f("view", view);
-        shader.setUniformMat4f("projection", projection);
-        shader.setUniformMat4f("model", modelMatrix);
-        corps.render();
-        shader.unbind();
-    }
-
-    private void updateModelMatrix() {
+    @Override
+    protected void updateModelMatrix() {
         modelMatrix.identity()
                 .translate(position)
                 .rotateX((float) Math.toRadians(rotation.x))
                 .rotateY((float) Math.toRadians(rotation.y))
                 .rotateZ((float) Math.toRadians(rotation.z));
         modelDirty = false;
-    }
-
-    public Matrix4f getModelMatrix() {
-        if (modelDirty) updateModelMatrix();
-        return modelMatrix;
-    }
-
-    public void cleanup() {
-        corps.cleanup();
     }
 
     public int collisionScore(Ennemis[] enemies) {
