@@ -179,7 +179,7 @@ public class WindowsCreator {
             // --- Update & rendu des ennemis ---
             for (Ennemis e : ennemis) {
                 e.deplacement(deltaTime);
-                if(e.isInView(camera)) e.render(viewMatrix, projection);
+                e.render(viewMatrix, projection);
             }
 
             // --- Crosshair ---

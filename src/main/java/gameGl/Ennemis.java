@@ -119,17 +119,6 @@ public class Ennemis {
         shader.unbind();
     }
 
-    public boolean isInView(Camera cam) {
-        Vector3f toEnemy = new Vector3f(position).sub(cam.getPosition());
-        float distance = toEnemy.length();
-        if (distance > cam.getRenderDistance()) return false; // hors portée
-
-        toEnemy.normalize();
-        float cosAngle = cam.getFront().dot(toEnemy);
-        float fov = (float)Math.toRadians(45f); // ton FOV horizontal
-        return cosAngle > Math.cos(fov / 2f); // si dans l’angle du FOV
-    }
-
     public Matrix4f getModelMatrix() {
         return modelMatrix;
     }

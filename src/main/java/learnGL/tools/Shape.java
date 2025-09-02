@@ -20,6 +20,7 @@ public class Shape {
 
     private Shader shader = null;
     private Texture texture = null;  // Texture associée
+    private Camera camera = null;
 
     public Shape(float[] vertices) {
         this.vertexCount = vertices.length / FLOATS_PER_VERTEX;
@@ -82,6 +83,11 @@ public class Shape {
     }
 
     public void render() {
+        if (camera != null) {
+            if (!isVisible(camera.getPosition(), camera.getFront(), camera.getRenderDistance(), 90f)) {
+                return; // pas rendu
+            }
+        }
         if (texture != null) texture.bind();
 
         glBindVertexArray(vaoId);
@@ -97,6 +103,18 @@ public class Shape {
         glBindVertexArray(0);
 
         if (texture != null) texture.unbind();
+    }
+
+    public boolean isVisible(Vector3f camPos, Vector3f camFront, float renderDistance, float fov) {
+        Vector3f toShape = new Vector3f(center()).sub(camPos);
+
+        // Test distance
+        if (toShape.lengthSquared() > renderDistance * renderDistance) return false;
+
+        // Test angle (cos(angle) = dot(normalized vectors))
+        toShape.normalize();
+        float cosFOV = (float) Math.cos(Math.toRadians(fov / 2.0));
+        return toShape.dot(camFront) >= cosFOV;
     }
 
     public void cleanup() {
@@ -156,6 +174,10 @@ public class Shape {
         }
 
         return normalizedVertices;
+    }
+
+    public void setCamera(Camera camera) {
+        this.camera = camera;
     }
 
     // Ajout automatique de slot couleur
