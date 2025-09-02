@@ -2,9 +2,7 @@ package gameGl;
 
 import gameGl.tools.PreVerticesTable;
 import gameGl.tools.Text;
-import gameGl.utils.Ball;
-import gameGl.utils.Crosshair;
-import gameGl.utils.Ennemis;
+import gameGl.utils.*;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
 import learnGL.tools.Shader;
@@ -17,6 +15,7 @@ import org.lwjgl.system.*;
 
 import java.io.IOException;
 import java.nio.*;
+import java.util.ArrayList;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -103,11 +102,13 @@ public class WindowsCreator {
         Shader textShader = new Shader("shaders/TextVertex.glsl", "shaders/TextFragment.glsl");
 
         Ennemis.setDespawnDistance(camera.getRenderSimulation());
-        Ennemis[] ennemis = new Ennemis[10];
-        for (int i = 0; i < ennemis.length; i++) {
-            ennemis[i] = new Ennemis(ennemisShader,
+
+        // --- Liste d'ennemis ---
+        ArrayList<Ennemis> ennemis = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            ennemis.add(new Ennemis(ennemisShader,
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
-                    PreVerticesTable.generateCubeSimple(1f));
+                    PreVerticesTable.generateCubeSimple(1f)));
         }
 
         Crosshair crosshair = new Crosshair(crosshairShader);
@@ -115,10 +116,15 @@ public class WindowsCreator {
         // --- Pool fixe de balles ---
         Ball.setMaxDistance(camera.getRenderSimulation());
         final int MAX_BALLS = 20;
-        Ball[] balls = new Ball[MAX_BALLS];
+        ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < MAX_BALLS; i++) {
-            balls[i] = new Ball(ballShader, 0.2f);
+            balls.add(new Ball(ballShader, 0.2f));
         }
+
+        // --- Liste combinée pour Manager3D ---
+        ArrayList<Entity> allEntities = new ArrayList<>();
+        allEntities.addAll(ennemis);
+        allEntities.addAll(balls);
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -140,11 +146,13 @@ public class WindowsCreator {
             Matrix4f projection = camera.getProjection(width, height);
 
             // --- Tir ---
-            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && currentTime - lastShootTime >= shootCooldown) {
-                lastShootTime = currentTime;
-                Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
+            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS &&
+                    currentTime - lastShootTime >= shootCooldown) {
 
-                // Active la première balle inactive du pool
+                lastShootTime = currentTime;
+                Vector3f spawnPos = new Vector3f(camera.getPosition())
+                        .add(new Vector3f(camera.getFront()).mul(0.5f));
+
                 for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
@@ -153,23 +161,12 @@ public class WindowsCreator {
                 }
             }
 
-            // --- Update & rendu des balles actives ---
-            for (Ball b : balls) {
-                if (!b.isActive()) continue;
+            // --- Update & rendu via Manager3D ---
+            score += Manager3D.updateAll(allEntities, deltaTime, ennemis);
+            Manager3D.renderAll(allEntities, viewMatrix, projection);
 
-                b.update(deltaTime);
-                b.render(viewMatrix, projection);
-                score += b.collisionScore(ennemis);
-            }
-
-            // --- Update & rendu des ennemis ---
-            for (Ennemis e : ennemis) {
-                e.update(deltaTime);
-                e.render(viewMatrix, projection);
-            }
-
-            // --- Crosshair ---
-            crosshair.updateHighlightedEnemy(ennemis, camera);
+            // --- Crosshair fixe et highlight ---
+            crosshair.updateHighlightedEnemy(ennemis.toArray(new Ennemis[0]), camera);
             crosshair.render(orthoProjection);
 
             // --- Texte ---
@@ -180,8 +177,7 @@ public class WindowsCreator {
         }
 
         // --- Cleanup ---
-        for (Ennemis e : ennemis) e.cleanup();
-        for (Ball b : balls) b.cleanup();
+        Manager3D.cleanupAll(allEntities);
         crosshair.cleanup();
         Text.cleanup();
     }

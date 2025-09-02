@@ -2,26 +2,36 @@ package gameGl.utils;
 
 import gameGl.tools.PreVerticesTable;
 import learnGL.tools.Shader;
+import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.Random;
 
 public class Ball extends Entity {
+    private final Shape corps;
+    private final Shader shader;
+
+    private final Vector3f position = new Vector3f();
     private final Vector3f direction = new Vector3f();
     private final Vector3f rotation = new Vector3f();
     private final Vector3f rotationSpeed = new Vector3f();
-    private boolean active = false;
 
     public static float speed = 25f;
     public static float maxDistance = 150f;
     public static float rotationMultiplier = 2f;
 
+    private boolean active = false;
     private final Random rand = new Random();
 
+    private final Matrix4f modelMatrix = new Matrix4f();
+    private boolean modelDirty = true;
+
     public Ball(Shader shader, float baseSize) {
-        super(shader, PreVerticesTable.generatePyramid(baseSize));
+        this.shader = shader;
+        corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generatePyramid(baseSize)));
         corps.setColor(1f, 0f, 0f, 1f);
+        corps.setShader(shader);
     }
 
     public void activate(Vector3f startPos, Vector3f forwardDir) {
@@ -62,7 +72,20 @@ public class Ball extends Entity {
     }
 
     @Override
-    protected void updateModelMatrix() {
+    public void render(Matrix4f view, Matrix4f projection) {
+        if (!active) return;
+
+        if (modelDirty) updateModelMatrix();
+
+        shader.bind();
+        shader.setUniformMat4f("view", view);
+        shader.setUniformMat4f("projection", projection);
+        shader.setUniformMat4f("model", modelMatrix);
+        corps.render();
+        shader.unbind();
+    }
+
+    private void updateModelMatrix() {
         modelMatrix.identity()
                 .translate(position)
                 .rotateX((float) Math.toRadians(rotation.x))
@@ -71,16 +94,23 @@ public class Ball extends Entity {
         modelDirty = false;
     }
 
+    @Override
+    public void cleanup() {
+        corps.cleanup();
+    }
+
     public int collisionScore(Ennemis[] enemies) {
         if (!active) return 0;
 
         int score = 0;
         Matrix4f ballModel = getModelMatrix();
+
         for (Ennemis enemy : enemies) {
             if (haveDestroyed(enemy, ballModel)) {
                 score += enemy.getScore();
             }
         }
+
         return score;
     }
 
@@ -94,11 +124,17 @@ public class Ball extends Entity {
                         enemy.getDespawnDistance() * 2,
                         enemy.getDespawnDistance() * 2
                 });
-                active = false;
+                // Note : la balle reste active pour toucher d'autres ennemis
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public Matrix4f getModelMatrix() {
+        if (modelDirty) updateModelMatrix();
+        return modelMatrix;
     }
 
     public static void setMaxDistance(float maxDistance) {
