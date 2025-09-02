@@ -1,6 +1,12 @@
 package gameGl.tools;
 
+import gameGl.utils.Ball;
+import gameGl.utils.Ennemis;
+import gameGl.utils.Entity2D;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import java.util.ArrayList;
 
 public class PreVerticesTable {
 
@@ -86,4 +92,60 @@ public class PreVerticesTable {
         };
     }
 
+    /**
+     * Manager pour tous les objets 2D fixes à l'écran.
+     */
+    public static class Manager2D {
+
+        public static void updateAll(ArrayList<? extends Entity2D> entities) {
+            for (Entity2D e : entities) {
+                e.update();
+            }
+        }
+
+        public static void renderAll(ArrayList<? extends Entity2D> entities, Matrix4f orthoProjection) {
+            for (Entity2D e : entities) {
+                e.render(orthoProjection);
+            }
+        }
+
+        public static void cleanupAll(ArrayList<? extends Entity2D> entities) {
+            for (Entity2D e : entities) {
+                e.cleanup();
+            }
+        }
+    }
+
+    public static class Manager3D {
+
+        private Manager3D() {}
+
+        // Update toutes les entités et retourne le score gagné
+        public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, float deltaTime) {
+            int score = 0;
+
+            for (Ennemis e : ennemis) {
+                e.update(deltaTime);
+            }
+
+            for (Ball b : balls) {
+                if (!b.isActive()) continue;
+
+                b.update(deltaTime);
+                score += b.collisionScore(ennemis.toArray(new Ennemis[0]));
+            }
+
+            return score;
+        }
+
+        public static void renderAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, Matrix4f view, Matrix4f projection) {
+            for (Ennemis e : ennemis) e.render(view, projection);
+            for (Ball b : balls) b.render(view, projection);
+        }
+
+        public static void cleanupAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls) {
+            for (Ennemis e : ennemis) e.cleanup();
+            for (Ball b : balls) b.cleanup();
+        }
+    }
 }

@@ -158,13 +158,13 @@ public class WindowsCreator {
             }
 
             // --- Update & rendu 3D via Manager3D ---
-            score += Manager3D.updateAll(ennemis, balls, deltaTime);
-            Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
+            score += PreVerticesTable.Manager3D.updateAll(ennemis, balls, deltaTime);
+            PreVerticesTable.Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
             // --- Update & rendu 2D via Manager2D ---
             crosshair.updateHighlightedEnemy(ennemis, camera); // logique spécifique crosshair
-            Manager2D.updateAll(uiElements);
-            Manager2D.renderAll(uiElements, orthoProjection);
+            PreVerticesTable.Manager2D.updateAll(uiElements);
+            PreVerticesTable.Manager2D.renderAll(uiElements, orthoProjection);
 
             // --- Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2.5f, 1f, 0f, 0f);
@@ -174,8 +174,8 @@ public class WindowsCreator {
         }
 
         // --- Cleanup ---
-        Manager3D.cleanupAll(ennemis, balls);
-        Manager2D.cleanupAll(uiElements);
+        PreVerticesTable.Manager3D.cleanupAll(ennemis, balls);
+        PreVerticesTable.Manager2D.cleanupAll(uiElements);
         Text.cleanup();
     }
 
