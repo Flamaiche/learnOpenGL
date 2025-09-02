@@ -27,8 +27,6 @@ public class WindowsCreator {
     private int width = 800;
     private int height = 600;
 
-    private Matrix4f projection = new Matrix4f();
-
     public void run() throws IOException {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
@@ -60,28 +58,12 @@ public class WindowsCreator {
                 glfwSetWindowShouldClose(win, true);
         });
 
-        // Callback pour redimensionnement : viewport + projection
+        // Callback pour redimensionnement : viewport seulement
         glfwSetFramebufferSizeCallback(window, (win, newWidth, newHeight) -> {
             width = newWidth;
             height = newHeight;
             glViewport(0, 0, width, height);
-
-            // Projection perspective mise à jour
-            projection.identity().perspective(
-                    (float) Math.toRadians(45.0f),
-                    (float) width / height,
-                    0.1f,
-                    100.0f
-            );
         });
-
-        // Projection initiale
-        projection.identity().perspective(
-                (float) Math.toRadians(45.0f),
-                (float) width / height,
-                0.1f,
-                100.0f
-        );
 
         try (MemoryStack stack = stackPush()) {
             IntBuffer pWidth = stack.mallocInt(1);
@@ -152,6 +134,7 @@ public class WindowsCreator {
             cmd.update();
 
             Matrix4f viewMatrix = camera.getViewMatrix();
+            Matrix4f projection = camera.getProjection(width, height);
 
             // --- Tir ---
             if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && currentTime - lastShootTime >= shootCooldown) {

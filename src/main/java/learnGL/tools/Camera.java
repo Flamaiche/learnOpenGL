@@ -13,6 +13,7 @@ public class Camera {
     // Angles mode libre (yaw/pitch en degrés)
     private float angleHorizontal; // yaw
     private float angleVertical;   // pitch
+    private float fov = 60f;       // en degrés
 
     // Mode orbite
     private boolean orbitMode = false;
@@ -189,4 +190,21 @@ public class Camera {
 
     public float getRenderSimulation() { return renderSimulation; }
     public void setRenderSimulation(float s) { renderSimulation = s; }
+
+    public float getFov() {
+        return fov;
+    }
+    public void setFov(float fovDeg) {
+        this.fov = fovDeg;
+    }
+
+    public Matrix4f getProjection(int width, int height) {
+        float aspect = (float) width / height;
+        return new Matrix4f().perspective(
+                (float) Math.toRadians(fov),
+                aspect,
+                0.1f,
+                renderDistance
+        );
+    }
 }
