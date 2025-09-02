@@ -1,5 +1,7 @@
 package gameGl;
 
+import gameGl.tools.Manager2D;
+import gameGl.tools.Manager3D;
 import gameGl.tools.PreVerticesTable;
 import gameGl.tools.Text;
 import gameGl.utils.*;
@@ -158,13 +160,13 @@ public class WindowsCreator {
             }
 
             // --- Update & rendu 3D via Manager3D ---
-            score += PreVerticesTable.Manager3D.updateAll(ennemis, balls, deltaTime);
-            PreVerticesTable.Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
+            score += Manager3D.updateAll(ennemis, balls, deltaTime);
+            Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
             // --- Update & rendu 2D via Manager2D ---
             crosshair.updateHighlightedEnemy(ennemis, camera); // logique spécifique crosshair
-            PreVerticesTable.Manager2D.updateAll(uiElements);
-            PreVerticesTable.Manager2D.renderAll(uiElements, orthoProjection);
+            Manager2D.updateAll(uiElements);
+            Manager2D.renderAll(uiElements, orthoProjection);
 
             // --- Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2.5f, 1f, 0f, 0f);
@@ -174,8 +176,8 @@ public class WindowsCreator {
         }
 
         // --- Cleanup ---
-        PreVerticesTable.Manager3D.cleanupAll(ennemis, balls);
-        PreVerticesTable.Manager2D.cleanupAll(uiElements);
+        Manager3D.cleanupAll(ennemis, balls);
+        Manager2D.cleanupAll(uiElements);
         Text.cleanup();
     }
 
