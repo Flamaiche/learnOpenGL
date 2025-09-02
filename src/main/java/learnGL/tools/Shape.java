@@ -107,14 +107,33 @@ public class Shape {
 
     public boolean isVisible(Vector3f camPos, Vector3f camFront, float renderDistance, float fov) {
         Vector3f toShape = new Vector3f(center()).sub(camPos);
+        float distance = toShape.length();
+        float radius = getBoundingRadius();
 
         // Test distance
-        if (toShape.lengthSquared() > renderDistance * renderDistance) return false;
+        if (distance - radius > renderDistance) return false;
 
-        // Test angle (cos(angle) = dot(normalized vectors))
+        // Test angle
         toShape.normalize();
-        float cosFOV = (float) Math.cos(Math.toRadians(fov / 2.0));
-        return toShape.dot(camFront) >= cosFOV;
+        float cosFOV = (float)Math.cos(Math.toRadians(fov / 2.0));
+
+        // Ajuste FOV légèrement selon le rayon
+        float angleAdjustment = (float)Math.asin(Math.min(radius / distance, 1.0f));
+        return toShape.dot(camFront) >= Math.cos(Math.acos(cosFOV) - angleAdjustment);
+    }
+
+    // Exemple d'une fonction simple pour le rayon de l'objet
+    public float getBoundingRadius() {
+        float[] c = center();
+        float r = 0;
+        for (int i = 0; i < vertexCount; i++) {
+            float dx = vertices[i*FLOATS_PER_VERTEX] - c[0];
+            float dy = vertices[i*FLOATS_PER_VERTEX+1] - c[1];
+            float dz = vertices[i*FLOATS_PER_VERTEX+2] - c[2];
+            float d = dx*dx + dy*dy + dz*dz;
+            if (d > r) r = d;
+        }
+        return (float)Math.sqrt(r);
     }
 
     public void cleanup() {

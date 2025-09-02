@@ -1,6 +1,5 @@
 package gameGl;
 
-import learnGL.tools.Camera;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;

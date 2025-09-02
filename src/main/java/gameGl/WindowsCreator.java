@@ -161,7 +161,7 @@ public class WindowsCreator {
 
             // --- Update & rendu des ennemis ---
             for (Ennemis e : ennemis) {
-                e.deplacement(deltaTime);
+                //e.deplacement(deltaTime);
                 e.render(viewMatrix, projection);
             }
 
