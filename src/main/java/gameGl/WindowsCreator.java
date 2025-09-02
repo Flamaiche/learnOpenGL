@@ -111,14 +111,17 @@ public class WindowsCreator {
                     PreVerticesTable.generateCubeSimple(1f)));
         }
 
+        // --- Crosshair ---
+        ArrayList<Entity2D> uiElements = new ArrayList<>();
         Crosshair crosshair = new Crosshair(crosshairShader);
+        uiElements.add(crosshair);
 
         // --- Pool fixe de balles ---
         Ball.setMaxDistance(camera.getRenderSimulation());
         final int MAX_BALLS = 20;
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < MAX_BALLS; i++) {
-            balls.add(new Ball(ballShader, 0.2f));
+            balls.add(new Ball(ballShader, 0.35f));
         }
 
         double lastShootTime = 0;
@@ -154,13 +157,14 @@ public class WindowsCreator {
                 }
             }
 
-            // --- Update & rendu via Manager3D ---
+            // --- Update & rendu 3D via Manager3D ---
             score += Manager3D.updateAll(ennemis, balls, deltaTime);
             Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
-            // --- Crosshair ---
-            crosshair.updateHighlightedEnemy(ennemis, camera);
-            crosshair.render(orthoProjection);
+            // --- Update & rendu 2D via Manager2D ---
+            crosshair.updateHighlightedEnemy(ennemis, camera); // logique spécifique crosshair
+            Manager2D.updateAll(uiElements);
+            Manager2D.renderAll(uiElements, orthoProjection);
 
             // --- Texte ---
             Text.drawText(textShader, "Score: " + score, 20, 30, 2.5f, 1f, 0f, 0f);
@@ -171,7 +175,7 @@ public class WindowsCreator {
 
         // --- Cleanup ---
         Manager3D.cleanupAll(ennemis, balls);
-        crosshair.cleanup();
+        Manager2D.cleanupAll(uiElements);
         Text.cleanup();
     }
 

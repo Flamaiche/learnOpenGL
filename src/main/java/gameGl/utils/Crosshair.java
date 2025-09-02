@@ -6,16 +6,13 @@ import learnGL.tools.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-
 import static org.lwjgl.opengl.GL11C.*;
 
-public class Crosshair {
+public class Crosshair extends Entity2D {
 
     private final Shape shape;
     private final Shader shader;
 
-    // Rayon mathématique
     private final Vector3f rayOrigin = new Vector3f();
     private final Vector3f rayDir = new Vector3f();
 
@@ -52,7 +49,8 @@ public class Crosshair {
         idx[0] = i;
     }
 
-    /** Rendu du crosshair au centre de l'écran (2D) */
+    /** Rendu du crosshair */
+    @Override
     public void render(Matrix4f orthoProjection) {
         boolean depth = glIsEnabled(GL_DEPTH_TEST);
         if (depth) glDisable(GL_DEPTH_TEST);
@@ -68,8 +66,12 @@ public class Crosshair {
         if (depth) glEnable(GL_DEPTH_TEST);
     }
 
+    /** Crosshair fixe : aucune logique, update vide */
+    @Override
+    public void update() {}
+
     /** Met à jour l'ennemi le plus proche dans le centre de l'écran */
-    public void updateHighlightedEnemy(ArrayList<Ennemis> ennemis, Camera camera) {
+    public void updateHighlightedEnemy(java.util.ArrayList<Ennemis> ennemis, Camera camera) {
         for (Ennemis e : ennemis) e.setHighlighted(false);
 
         Ennemis closest = null;
@@ -89,6 +91,7 @@ public class Crosshair {
         if (closest != null) closest.setHighlighted(true);
     }
 
+    @Override
     public void cleanup() {
         shape.cleanup();
     }
