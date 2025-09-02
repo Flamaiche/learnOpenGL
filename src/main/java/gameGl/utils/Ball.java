@@ -1,4 +1,4 @@
-package gameGl;
+package gameGl.utils;
 
 import gameGl.tools.PreVerticesTable;
 import learnGL.tools.Shader;

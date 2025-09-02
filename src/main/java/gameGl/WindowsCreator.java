@@ -2,6 +2,9 @@ package gameGl;
 
 import gameGl.tools.PreVerticesTable;
 import gameGl.tools.Text;
+import gameGl.utils.Ball;
+import gameGl.utils.Crosshair;
+import gameGl.utils.Ennemis;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
 import learnGL.tools.Shader;
