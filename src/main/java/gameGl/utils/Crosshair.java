@@ -6,6 +6,8 @@ import learnGL.tools.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+
 import static org.lwjgl.opengl.GL11C.*;
 
 public class Crosshair {
@@ -67,7 +69,7 @@ public class Crosshair {
     }
 
     /** Met à jour l'ennemi le plus proche dans le centre de l'écran */
-    public void updateHighlightedEnemy(Ennemis[] ennemis, Camera camera) {
+    public void updateHighlightedEnemy(ArrayList<Ennemis> ennemis, Camera camera) {
         for (Ennemis e : ennemis) e.setHighlighted(false);
 
         Ennemis closest = null;

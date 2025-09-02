@@ -5,78 +5,70 @@ import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-
 import java.util.Random;
 
 public class Ball extends Entity {
-    private final Shape corps;
-    private final Shader shader;
-
-    private final Vector3f position = new Vector3f();
-    private final Vector3f direction = new Vector3f();
-    private final Vector3f rotation = new Vector3f();
-    private final Vector3f rotationSpeed = new Vector3f();
+    private Shape corps;
+    private Shader shader;
+    private Vector3f position = new Vector3f();
+    private Vector3f direction = new Vector3f();
+    private Vector3f rotation = new Vector3f();
+    private Vector3f rotationSpeed = new Vector3f();
 
     public static float speed = 25f;
     public static float maxDistance = 150f;
     public static float rotationMultiplier = 2f;
 
     private boolean active = false;
-    private final Random rand = new Random();
-
-    private final Matrix4f modelMatrix = new Matrix4f();
+    private Random rand = new Random();
     private boolean modelDirty = true;
 
     public Ball(Shader shader, float baseSize) {
         this.shader = shader;
         corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generatePyramid(baseSize)));
-        corps.setColor(1f, 0f, 0f, 1f);
         corps.setShader(shader);
+        corps.setColor(1f,0f,0f,1f);
     }
 
     public void activate(Vector3f startPos, Vector3f forwardDir) {
         position.set(startPos);
         direction.set(forwardDir).normalize();
-
-        rotation.set(0f, 0f, 0f);
-        rotationSpeed.set(
-                rand.nextFloat() * 720f - 360f,
-                rand.nextFloat() * 720f - 360f,
-                rand.nextFloat() * 720f - 360f
-        );
-
+        rotation.set(0f,0f,0f);
+        rotationSpeed.set(rand.nextFloat()*720-360f, rand.nextFloat()*720-360f, rand.nextFloat()*720-360f);
         active = true;
         modelDirty = true;
     }
 
-    public void deactivate() {
-        active = false;
-    }
+    public void deactivate() { active = false; }
+    public boolean isActive() { return active; }
 
-    public boolean isActive() {
-        return active;
-    }
-
-    @Override
     public void update(float deltaTime) {
         if (!active) return;
 
-        position.fma(speed * deltaTime, direction);
-        rotation.x += rotationSpeed.x * deltaTime * rotationMultiplier;
-        rotation.y += rotationSpeed.y * deltaTime * rotationMultiplier;
-        rotation.z += rotationSpeed.z * deltaTime * rotationMultiplier;
+        position.fma(speed*deltaTime, direction);
+        rotation.x += rotationSpeed.x*deltaTime*rotationMultiplier;
+        rotation.y += rotationSpeed.y*deltaTime*rotationMultiplier;
+        rotation.z += rotationSpeed.z*deltaTime*rotationMultiplier;
 
-        if (position.length() > maxDistance) active = false;
+        // désactivation si trop loin
+        if (position.length() > maxDistance) deactivate();
 
         modelDirty = true;
+        updateModelMatrix();
     }
 
-    @Override
+    private void updateModelMatrix() {
+        if (!modelDirty) return;
+        modelMatrix.identity()
+                .translate(position)
+                .rotateX((float)Math.toRadians(rotation.x))
+                .rotateY((float)Math.toRadians(rotation.y))
+                .rotateZ((float)Math.toRadians(rotation.z));
+        modelDirty = false;
+    }
+
     public void render(Matrix4f view, Matrix4f projection) {
         if (!active) return;
-
-        if (modelDirty) updateModelMatrix();
-
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);
@@ -85,67 +77,28 @@ public class Ball extends Entity {
         shader.unbind();
     }
 
-    private void updateModelMatrix() {
-        modelMatrix.identity()
-                .translate(position)
-                .rotateX((float) Math.toRadians(rotation.x))
-                .rotateY((float) Math.toRadians(rotation.y))
-                .rotateZ((float) Math.toRadians(rotation.z));
-        modelDirty = false;
-    }
-
-    @Override
-    public Matrix4f getModelMatrix() {
-        if (modelDirty) updateModelMatrix();
-        return modelMatrix;
-    }
-
-    @Override
-    public void cleanup() {
-        corps.cleanup();
-    }
+    public void cleanup() { corps.cleanup(); }
 
     public int collisionScore(Ennemis[] enemies) {
         if (!active) return 0;
-
         int score = 0;
-        Matrix4f ballModel = getModelMatrix();
-
         for (Ennemis enemy : enemies) {
-            if (haveDestroyed(enemy, ballModel)) {
-                score += enemy.getScore();
+            if (enemy.getVie() <= 0) continue;
+            if (corps.intersectsOptimized(enemy.getCorps(), modelMatrix, enemy.getModelMatrix())) {
+                enemy.decrementVie();
+                if (enemy.getVie() <= 0) {
+                    enemy.setDeplacement(new float[]{enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2});
+                    deactivate(); // balle disparait
+                    score += enemy.getScore();
+                }
             }
         }
-
         return score;
     }
 
-    private boolean haveDestroyed(Ennemis enemy, Matrix4f ballModel) {
-        Matrix4f enemyModel = enemy.getModelMatrix();
-        if (enemy.getCorps().intersectsOptimized(corps, ballModel, enemyModel)) {
-            enemy.decrementVie();
-            if (enemy.getVie() <= 0) {
-                enemy.setDeplacement(new float[]{
-                        enemy.getDespawnDistance() * 2,
-                        enemy.getDespawnDistance() * 2,
-                        enemy.getDespawnDistance() * 2
-                });
-                active = false; // <- pool : la balle devient réutilisable
-                return true;
-            }
-        }
-        return false;
-    }
+    public Vector3f getPosition() { return position; }
 
-    public static void setMaxDistance(float maxDistance) {
-        Ball.maxDistance = maxDistance;
-    }
-
-    public static void setSpeed(float speed) {
-        Ball.speed = speed;
-    }
-
-    public static void setRotationMultiplier(float rotationMultiplier) {
-        Ball.rotationMultiplier = rotationMultiplier;
-    }
+    public static void setMaxDistance(float d) { maxDistance = d; }
+    public static void setSpeed(float s) { speed = s; }
+    public static void setRotationMultiplier(float r) { rotationMultiplier = r; }
 }

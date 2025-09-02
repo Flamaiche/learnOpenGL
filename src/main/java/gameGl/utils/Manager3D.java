@@ -1,44 +1,37 @@
 package gameGl.utils;
 
 import org.joml.Matrix4f;
-
-import java.util.List;
+import java.util.ArrayList;
 
 public class Manager3D {
 
-    private Manager3D() {} // empêche l'instanciation
+    private Manager3D() {}
 
-    /**
-     * Met à jour toutes les entités et retourne le score généré par les Ball.
-     */
-    public static int updateAll(List<Entity> entities, float deltaTime, List<Ennemis> enemies) {
+    // Update toutes les entités et retourne le score gagné
+    public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, float deltaTime) {
         int score = 0;
 
-        for (Entity e : entities) {
+        for (Ennemis e : ennemis) {
             e.update(deltaTime);
+        }
 
-            if (e instanceof Ball b) {
-                score += b.collisionScore(enemies.toArray(new Ennemis[0]));
-            }
+        for (Ball b : balls) {
+            if (!b.isActive()) continue;
+
+            b.update(deltaTime);
+            score += b.collisionScore(ennemis.toArray(new Ennemis[0]));
         }
 
         return score;
     }
 
-    /**
-     * Rend toutes les entités 3D.
-     */
-    public static void renderAll(List<Entity> entities, Matrix4f view, Matrix4f projection) {
-        for (Entity e : entities) {
-            e.render(view, projection);
-        }
+    public static void renderAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, Matrix4f view, Matrix4f projection) {
+        for (Ennemis e : ennemis) e.render(view, projection);
+        for (Ball b : balls) b.render(view, projection);
     }
 
-    /**
-     * Nettoie toutes les entités et vide la liste.
-     */
-    public static void cleanupAll(List<Entity> entities) {
-        for (Entity e : entities) e.cleanup();
-        entities.clear();
+    public static void cleanupAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls) {
+        for (Ennemis e : ennemis) e.cleanup();
+        for (Ball b : balls) b.cleanup();
     }
 }

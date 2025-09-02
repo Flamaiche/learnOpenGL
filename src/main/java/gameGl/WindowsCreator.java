@@ -103,7 +103,7 @@ public class WindowsCreator {
 
         Ennemis.setDespawnDistance(camera.getRenderSimulation());
 
-        // --- Liste d'ennemis ---
+        // --- Ennemis ---
         ArrayList<Ennemis> ennemis = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             ennemis.add(new Ennemis(ennemisShader,
@@ -120,11 +120,6 @@ public class WindowsCreator {
         for (int i = 0; i < MAX_BALLS; i++) {
             balls.add(new Ball(ballShader, 0.2f));
         }
-
-        // --- Liste combinée pour Manager3D ---
-        ArrayList<Entity> allEntities = new ArrayList<>();
-        allEntities.addAll(ennemis);
-        allEntities.addAll(balls);
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -146,14 +141,12 @@ public class WindowsCreator {
             Matrix4f projection = camera.getProjection(width, height);
 
             // --- Tir ---
-            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS &&
-                    currentTime - lastShootTime >= shootCooldown) {
-
+            if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && currentTime - lastShootTime >= shootCooldown) {
                 lastShootTime = currentTime;
-                Vector3f spawnPos = new Vector3f(camera.getPosition())
-                        .add(new Vector3f(camera.getFront()).mul(0.5f));
+                Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
 
-                for (Ball b : balls) {
+                for (int i = 0; i < balls.size(); i++) {
+                    Ball b = balls.get(i);
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
                         break;
@@ -162,11 +155,11 @@ public class WindowsCreator {
             }
 
             // --- Update & rendu via Manager3D ---
-            score += Manager3D.updateAll(allEntities, deltaTime, ennemis);
-            Manager3D.renderAll(allEntities, viewMatrix, projection);
+            score += Manager3D.updateAll(ennemis, balls, deltaTime);
+            Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
-            // --- Crosshair fixe et highlight ---
-            crosshair.updateHighlightedEnemy(ennemis.toArray(new Ennemis[0]), camera);
+            // --- Crosshair ---
+            crosshair.updateHighlightedEnemy(ennemis, camera);
             crosshair.render(orthoProjection);
 
             // --- Texte ---
@@ -177,7 +170,7 @@ public class WindowsCreator {
         }
 
         // --- Cleanup ---
-        Manager3D.cleanupAll(allEntities);
+        Manager3D.cleanupAll(ennemis, balls);
         crosshair.cleanup();
         Text.cleanup();
     }

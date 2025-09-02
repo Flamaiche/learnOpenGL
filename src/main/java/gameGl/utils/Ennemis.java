@@ -4,15 +4,14 @@ import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-
 import java.util.Random;
 
 import static org.lwjgl.opengl.GL11C.*;
 
 public class Ennemis extends Entity {
-    private Random rand = new Random();
-    private float spawnSize = 10.0f;
-    private float exclusionSize = 0.0f;
+    private static Random rand = new Random();
+    private float spawnSize = 10f;
+    private float exclusionSize = 0f;
 
     private Shape corps;
     private Shader shader;
@@ -23,22 +22,16 @@ public class Ennemis extends Entity {
     public static float despawnDistance = 150f;
     private boolean highlighted = false;
 
-    private int vie;
-    private int score;
-
-    private final Matrix4f modelMatrix = new Matrix4f();
+    private int vie = 1;
+    private int score = 10;
 
     public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
         corps = new Shape(Shape.autoAddSlotColor(verticesShape));
-        corps.setColor(0f, 0f, 0f, 1f);
         corps.setShader(shader);
+        corps.setColor(0f,0f,0f,1f);
         this.shader = shader;
-
-        vie = 1;
-        score = 10;
-
         setDeplacement(centerPlayer);
-        updateModelMatrix(); // initialisation
+        updateModelMatrix();
     }
 
     public void setDeplacement(float[] centerPlayer) {
@@ -49,111 +42,69 @@ public class Ennemis extends Entity {
         target = new Vector3f(targetCoords[0], targetCoords[1], targetCoords[2]);
 
         direction = new Vector3f(target).sub(position).normalize();
-        System.out.println(target + " "  + position + " " + direction);
-
         updateModelMatrix();
     }
 
-    private float[] generateSpawn(float playerX, float playerY, float playerZ) {
-        float x, y, z;
+    public float[] generateSpawn(float playerX, float playerY, float playerZ) {
+        float x,y,z;
         do {
-            x = rand.nextFloat() * (2 * spawnSize) - spawnSize;
-            y = rand.nextFloat() * (2 * spawnSize) - spawnSize;
-            z = rand.nextFloat() * (2 * spawnSize) - spawnSize;
-        } while (
-                x > playerX - exclusionSize && x < playerX + exclusionSize &&
-                        y > playerY - exclusionSize && y < playerY + exclusionSize &&
-                        z > playerZ - exclusionSize && z < playerZ + exclusionSize
-        );
-
-        return new float[]{x, y, z};
+            x = rand.nextFloat() * (2*spawnSize) - spawnSize;
+            y = rand.nextFloat() * (2*spawnSize) - spawnSize;
+            z = rand.nextFloat() * (2*spawnSize) - spawnSize;
+        } while (x > playerX-exclusionSize && x < playerX+exclusionSize &&
+                y > playerY-exclusionSize && y < playerY+exclusionSize &&
+                z > playerZ-exclusionSize && z < playerZ+exclusionSize);
+        return new float[]{x,y,z};
     }
 
-    @Override
     public void update(float deltaTime) {
         Vector3f deplace = new Vector3f(direction).mul(speed * deltaTime);
         position.add(deplace);
         updateModelMatrix();
     }
 
-    @Override
+    private void updateModelMatrix() {
+        modelMatrix.identity().translate(position);
+    }
+
     public void render(Matrix4f view, Matrix4f projection) {
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);
         shader.setUniformMat4f("model", modelMatrix);
 
-        // Rendu normal
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        corps.setColor(0f, 0f, 0f, 1f);
+        corps.setColor(0f,0f,0f,1f);
         corps.render();
 
-        // Outline si highlight
         if (highlighted) {
             Matrix4f outlineModel = new Matrix4f(modelMatrix).scale(1.05f);
-
             shader.setUniformMat4f("model", outlineModel);
 
             glEnable(GL_DEPTH_TEST);
             glDepthMask(false);
-
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glLineWidth(2.5f);
-            corps.setColor(1f, 0f, 0f, 1f);
+            corps.setColor(1f,0f,0f,1f);
             corps.render();
 
             glDepthMask(true);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
             shader.setUniformMat4f("model", modelMatrix);
         }
 
         shader.unbind();
     }
 
-    private void updateModelMatrix() {
-        modelMatrix.identity().translate(position);
-    }
+    public void cleanup() { corps.cleanup(); }
 
-    @Override
-    public Matrix4f getModelMatrix() {
-        return modelMatrix;
-    }
+    public Shape getCorps() { return corps; }
+    public int getVie() { return vie; }
+    public void decrementVie() { if (vie>0) vie--; }
+    public int getScore() { return score; }
+    public float getDespawnDistance() { return despawnDistance; }
+    public void setHighlighted(boolean h) { highlighted = h; }
 
-    @Override
-    public void cleanup() {
-        corps.cleanup();
-    }
-
-    public Shape getCorps() {
-        return corps;
-    }
-
-    public int getVie() {
-        return vie;
-    }
-
-    public void decrementVie() {
-        if (vie > 0) vie--;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public float getDespawnDistance() {
-        return despawnDistance;
-    }
-
-    public void setHighlighted(boolean h) {
-        this.highlighted = h;
-    }
-
-    public static void setDespawnDistance(float d) {
-        despawnDistance = d;
-    }
-
-    public static void setSpeed(float s) {
-        speed = s;
-    }
+    public static void setDespawnDistance(float d) { despawnDistance = d; }
+    public static void setSpeed(float s) { speed = s; }
 }
