@@ -84,7 +84,7 @@ public class Shape {
 
     public void render() {
         if (camera != null) {
-            if (!isVisible(camera.getPosition(), camera.getFront(), camera.getRenderDistance(), 90f)) {
+            if (!isVisible(camera.getPosition(), camera.getFront(), camera.getRenderDistance(), camera.getFov())) {
                 return; // pas rendu
             }
         }
