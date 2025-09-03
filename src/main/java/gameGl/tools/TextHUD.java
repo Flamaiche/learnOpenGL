@@ -1,13 +1,13 @@
-package gameGl.utils;
+package gameGl.tools;
 
-public class HUDText {
+public class TextHUD {
     private String content;
     private final float x, y;
     private final float scale;
     private final float r, g, b;
     private boolean active;
 
-    public HUDText(String content, float x, float y, float scale, float r, float g, float b) {
+    public TextHUD(String content, float x, float y, float scale, float r, float g, float b) {
         this.content = content;
         this.x = x;
         this.y = y;

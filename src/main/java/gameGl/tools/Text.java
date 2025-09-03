@@ -21,6 +21,7 @@ public class Text {
         vbo = glGenBuffers();
         initialized = true;
     }
+
     public static void drawText(Shader shader, String text,
                                 float x, float y, float scale,
                                 float r, float g, float b) {
@@ -31,7 +32,6 @@ public class Text {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // STB Easy Font
         ByteBuffer buffer = BufferUtils.createByteBuffer(text.length() * 270);
         int quads = STBEasyFont.stb_easy_font_print(0, 0, text, null, buffer);
 
@@ -44,7 +44,6 @@ public class Text {
 
         shader.bind();
 
-        // Projection ortho
         int[] vp = new int[4];
         glGetIntegerv(GL_VIEWPORT, vp);
         int winW = vp[2], winH = vp[3];
@@ -61,11 +60,24 @@ public class Text {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        // Restaure état OpenGL
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
     }
 
+    public static float getTextWidth(String text, float scale) {
+        if (text == null || text.isEmpty()) return 0f;
+
+        ByteBuffer buffer = BufferUtils.createByteBuffer(text.length() * 270);
+        int quads = STBEasyFont.stb_easy_font_print(0, 0, text, null, buffer);
+
+        float maxX = 0f;
+        for (int i = 0; i < quads * 4; i++) {
+            int pos = i * 16;
+            float x = buffer.getFloat(pos);
+            if (x > maxX) maxX = x;
+        }
+        return maxX * scale;
+    }
 
     public static void cleanup() {
         if (!initialized) return;

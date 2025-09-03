@@ -124,13 +124,15 @@ public class WindowsCreator {
         }
 
         // --- TextManager pour HUD & debug ---
-        TextManager hud = new TextManager();
-        hud.setDebugMode(!true); // true = affiche balls/ennemis actifs pour debug
+        TextManager hud = new TextManager(width, height);
+        hud.setDebugMode(true); // true = affiche balls/ennemis actifs pour debug
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
         double lastTime = glfwGetTime();
         int score = 0;
+        int ballsFiredTotal = 0;
+        int enemiesKilledTotal = 0;
 
         Matrix4f orthoProjection = new Matrix4f().ortho2D(-1, 1, -1, 1);
 
@@ -154,13 +156,19 @@ public class WindowsCreator {
                 for (Ball b : balls) {
                     if (!b.isActive()) {
                         b.activate(spawnPos, camera.getFront());
+                        ballsFiredTotal++;
                         break;
                     }
                 }
             }
 
             // --- Update & rendu 3D via Manager3D ---
-            score += Manager3D.updateAll(ennemis, balls, deltaTime, camera.getPosition());
+            int point = Manager3D.updateAll(ennemis, balls, deltaTime, camera.getPosition());
+            if (point > 0) {
+                score += point;
+                enemiesKilledTotal++;
+            }
+
             Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
             // --- Update & rendu 2D via Manager2D ---
@@ -185,12 +193,13 @@ public class WindowsCreator {
 
             float fps = 1f / deltaTime;
 
-            hud.update(score, fps,
+            hud.update(deltaTime, score, fps,
                     camera.getPosition().x, camera.getPosition().y, camera.getPosition().z,
                     camera.getPitch(), camera.getYaw(), camera.getRoll(),
+                    ballsFiredTotal, enemiesKilledTotal,
                     activeBalls, balls.size(),
                     activeEnemies, ennemis.size(),
-                    distanceTarget);
+                    distanceTarget, width, height);
 
             hud.render(textShader);
 
