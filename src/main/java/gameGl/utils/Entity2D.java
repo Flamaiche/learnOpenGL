@@ -9,7 +9,7 @@ public abstract class Entity2D {
     /**
      * Met à jour l'objet 2D (logique interne)
      */
-    public abstract void update();
+    public abstract void update(int width, int height);
 
     /**
      * Rendu de l'objet 2D

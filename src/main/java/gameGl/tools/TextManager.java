@@ -15,8 +15,8 @@ public class TextManager {
     private int windowHeight;
 
     private final float margin = 20f;
-    private final float lineHeight = 28f;
-    private final float uniformTextScale = 2.0f; // taille fixe
+    private final float lineHeight = 20f;
+    private final float uniformTextScale = 1.5f; // taille fixe
 
     private double totalElapsedTime = 0.0;
 

@@ -172,8 +172,7 @@ public class WindowsCreator {
             Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
             // --- Update & rendu 2D via Manager2D ---
-            crosshair.updateHighlightedEnemy(ennemis, camera); // logique spécifique crosshair
-            Manager2D.updateAll(uiElements);
+            Manager2D.updateAll(uiElements, width, height, ennemis, camera);
             Manager2D.renderAll(uiElements, orthoProjection);
 
             // --- Mise à jour HUD / debug ---

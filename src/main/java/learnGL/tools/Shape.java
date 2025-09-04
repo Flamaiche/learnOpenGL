@@ -497,13 +497,19 @@ public class Shape {
         MemoryUtil.memFree(buffer);
     }
 
-    public void setPosition(float v, float v1, float v2) {
-    for (int i = 0; i < vertexCount; i++) {
-            vertices[i * FLOATS_PER_VERTEX] = v; // X
-            vertices[i * FLOATS_PER_VERTEX + 1] = v1; // Y
-            vertices[i * FLOATS_PER_VERTEX + 2] = v2; // Z
+    public void updatePositions(float[] newVertices) {
+        // set les coordonnées x,y,z uniquement
+        if (newVertices.length != vertices.length) {
+            throw new IllegalArgumentException("Le tableau de vertices doit avoir la même taille !");
         }
-        // Recréer le VBO avec les nouvelles positions
+
+        for (int i = 0; i < vertexCount; i++) {
+            vertices[i * FLOATS_PER_VERTEX]     = newVertices[i * FLOATS_PER_VERTEX];     // X
+            vertices[i * FLOATS_PER_VERTEX + 1] = newVertices[i * FLOATS_PER_VERTEX + 1]; // Y
+            vertices[i * FLOATS_PER_VERTEX + 2] = newVertices[i * FLOATS_PER_VERTEX + 2]; // Z
+        }
+
+        // Recharge le VBO avec les nouvelles positions
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         FloatBuffer buffer = MemoryUtil.memAllocFloat(vertices.length);
         buffer.put(vertices).flip();
