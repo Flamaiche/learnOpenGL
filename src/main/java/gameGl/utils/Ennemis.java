@@ -27,7 +27,6 @@ public class Ennemis extends Entity {
     private int vie = MAX_VIE;
     private int score = 10;
     private final float RESPAWN_TIME = 5f;
-    private float respawnTimer = 0f;
     private float deathTime = -1f;
 
     public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
@@ -56,10 +55,10 @@ public class Ennemis extends Entity {
             x = rand.nextFloat() * (2*spawnSize) - spawnSize;
             y = rand.nextFloat() * (2*spawnSize) - spawnSize;
             z = rand.nextFloat() * (2*spawnSize) - spawnSize;
-        } while (x > playerX-exclusionSize && x < playerX+exclusionSize &&
-                y > playerY-exclusionSize && y < playerY+exclusionSize &&
-                z > playerZ-exclusionSize && z < playerZ+exclusionSize);
-        return new float[]{x,y,z};
+        } while (x > -exclusionSize && x < exclusionSize &&
+                y > -exclusionSize && y < exclusionSize &&
+                z > -exclusionSize && z < exclusionSize);
+        return new float[]{playerX + x,playerY + y,playerZ + z};
     }
 
     public boolean shouldDespawn(Vector3f cameraPos) {
