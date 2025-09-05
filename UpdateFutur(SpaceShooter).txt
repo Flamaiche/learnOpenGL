@@ -1,3 +1,6 @@
+Version : ALPHA 1.0
+
+Idée de futur update :
 - gyroscope (Camere) :
     gauche-droite de la camera comme un OVI
 - Class Joueur :
@@ -11,6 +14,7 @@
     - ajouter touche
     - supprimer touche
 - ClassMenu :
+    - pause du jeu
     - liste des boutons dont :
         * bouton play
         * bouton option (ToucheCommande pour le moment)

@@ -22,7 +22,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-public class WindowsCreator {
+public class SpaceShooter {
 
     private long window;
     private int width = 800;
@@ -213,6 +213,6 @@ public class WindowsCreator {
     }
 
     public static void main(String[] args) throws IOException {
-        new WindowsCreator().run();
+        new SpaceShooter().run();
     }
 }
