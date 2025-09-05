@@ -22,6 +22,7 @@ public class Ball extends Entity {
     private boolean active = false;
     private Random rand = new Random();
     private boolean modelDirty = true;
+    private Vector3f spawnPos;
 
     public Ball(Shader shader, float baseSize) {
         this.shader = shader;
@@ -32,6 +33,7 @@ public class Ball extends Entity {
 
     public void activate(Vector3f startPos, Vector3f forwardDir) {
         position.set(startPos);
+        spawnPos = new Vector3f(startPos); // mémorise le point de départ
         direction.set(forwardDir).normalize();
         rotation.set(0f,0f,0f);
         rotationSpeed.set(rand.nextFloat()*720-360f, rand.nextFloat()*720-360f, rand.nextFloat()*720-360f);
@@ -39,7 +41,7 @@ public class Ball extends Entity {
         modelDirty = true;
     }
 
-    public void deactivate() { active = false; }
+    public void deactivate() {   active = false; }
     public boolean isActive() { return active; }
 
     public void update(float deltaTime) {
@@ -51,7 +53,7 @@ public class Ball extends Entity {
         rotation.z += rotationSpeed.z*deltaTime*rotationMultiplier;
 
         // désactivation si trop loin
-        if (position.length() > maxDistance) deactivate();
+        if (position.distance(spawnPos) > maxDistance) deactivate();
 
         modelDirty = true;
         updateModelMatrix();

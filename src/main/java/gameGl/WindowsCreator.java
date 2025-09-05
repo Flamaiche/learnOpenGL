@@ -93,7 +93,7 @@ public class WindowsCreator {
 
         Camera camera = new Camera(new Vector3f(0, 0, 3));
         Commande cmd = new Commande(camera, window);
-        cmd.vitesseRotation = 1.5f;
+        cmd.vitesseRotation = 1.0f;
 
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
         Shader ballShader = new Shader("shaders/DefaultVertex.glsl", "shaders/DefaultFragment.glsl");

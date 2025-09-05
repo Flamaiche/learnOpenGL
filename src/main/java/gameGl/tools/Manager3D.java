@@ -17,7 +17,7 @@ public class Manager3D {
 
         for (Ennemis e : ennemis) {
             if (e.shouldDespawn(playerPos)) {
-                e.setDeplacement(new float[]{0f,0f,0f});
+                e.setDeplacement(new float[] {playerPos.x, playerPos.y, playerPos.z});
             }
             e.update(deltaTime);
         }
