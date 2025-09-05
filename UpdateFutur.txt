@@ -5,6 +5,7 @@
     - vie
     - gerer Commande (tout ce qui est vitesse)
     - gerer ToucheCommande
+    - bestScore
 - Class ToucheCommande :
     - liste des touches
     - ajouter touche
@@ -19,3 +20,6 @@
     - évolution dans le temps, les ennemis mutent des qu'on les tue
     - évolution accélérée si il reste en vie
     - évolution aléatoire (ajoute de forme, de vitesse, de vie)
+- upgrade du joueur :
+    - différent type de balles (couleur, vitesse, taille, fonction)
+    - achetable avec le score
