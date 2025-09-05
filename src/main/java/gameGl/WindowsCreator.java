@@ -104,7 +104,7 @@ public class WindowsCreator {
 
         // --- Ennemis ---
         ArrayList<Ennemis> ennemis = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             ennemis.add(new Ennemis(ennemisShader,
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
                     PreVerticesTable.generateCubeSimple(1f)));
