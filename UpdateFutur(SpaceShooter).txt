@@ -1,6 +1,8 @@
 Version : ALPHA 1.0
 
 Idée de futur update :
+- souris (Camera) :
+    direction visuelle de la camera
 - gyroscope (Camere) :
     gauche-droite de la camera comme un OVI
 - Class Joueur :
