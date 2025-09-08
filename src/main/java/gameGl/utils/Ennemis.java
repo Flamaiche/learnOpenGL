@@ -1,5 +1,6 @@
 package gameGl.utils;
 
+import learnGL.tools.Camera;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
@@ -29,13 +30,15 @@ public class Ennemis extends Entity {
     private final float RESPAWN_TIME = 5f;
     private float deathTime = -1f;
 
-    public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape) {
+    public Ennemis(Shader shader, float[] centerPlayer, float[] verticesShape, Camera camera) {
         corps = new Shape(Shape.autoAddSlotColor(verticesShape));
         corps.setShader(shader);
         corps.setColor(0f,0f,0f,1f);
         this.shader = shader;
         setDeplacement(centerPlayer);
         updateModelMatrix();
+        corps.setCamera(camera);
+        corps.setModelMatrix(modelMatrix);
     }
 
     public void setDeplacement(float[] centerPlayer) {

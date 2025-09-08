@@ -107,8 +107,7 @@ public class SpaceShooter {
         for (int i = 0; i < 15; i++) {
             ennemis.add(new Ennemis(ennemisShader,
                     new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
-                    PreVerticesTable.generateCubeSimple(1f)));
-            ennemis.get(i).getCorps().setCamera(camera);
+                    PreVerticesTable.generateCubeSimple(1f), camera));
         }
 
         // --- Crosshair 2D ---

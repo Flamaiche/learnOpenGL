@@ -6,6 +6,7 @@ import java.nio.FloatBuffer;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 public class Shape {
@@ -21,6 +22,7 @@ public class Shape {
     private Shader shader = null;
     private Texture texture = null;  // Texture associée
     private Camera camera = null;
+    private Matrix4f modelMatrix = new  Matrix4f().identity();
 
     public Shape(float[] vertices) {
         this.vertexCount = vertices.length / FLOATS_PER_VERTEX;
@@ -84,7 +86,7 @@ public class Shape {
 
     public void render() {
         if (camera != null) {
-            if (!isVisible(camera.getPosition(), camera.getFront(), camera.getRenderDistance(), camera.getFov())) {
+            if (!isVisible(camera)) {
                 return; // pas rendu
             }
         }
@@ -105,35 +107,50 @@ public class Shape {
         if (texture != null) texture.unbind();
     }
 
-    public boolean isVisible(Vector3f camPos, Vector3f camFront, float renderDistance, float fov) {
-        Vector3f toShape = new Vector3f(center()).sub(camPos);
-        float distance = toShape.length();
-        float radius = getBoundingRadius();
+    public boolean isVisible(Camera camera) {
+        if (camera == null) return true;
 
-        // Test distance
-        if (distance - radius > renderDistance) return false;
+        Vector3f camPos = camera.getPosition();
+        Vector3f camFront = camera.getFront();
+        float renderDistance = camera.getRenderDistance();
+        float fov = camera.getFov();
 
-        // Test angle
-        toShape.normalize();
-        float cosFOV = (float)Math.cos(Math.toRadians(fov / 2.0));
+        // Tolérance pour éviter disparition dans les coins
+        float fovPadding = 25.0f; // en degrés
+        float cosFOV = (float) Math.cos(Math.toRadians((fov + fovPadding) / 2.0));
 
-        // Ajuste FOV légèrement selon le rayon
-        float angleAdjustment = (float)Math.asin(Math.min(radius / distance, 1.0f));
-        return toShape.dot(camFront) >= Math.cos(Math.acos(cosFOV) - angleAdjustment);
-    }
+        boolean anyInside = false;
 
-    // Exemple d'une fonction simple pour le rayon de l'objet
-    public float getBoundingRadius() {
-        float[] c = center();
-        float r = 0;
         for (int i = 0; i < vertexCount; i++) {
-            float dx = vertices[i*FLOATS_PER_VERTEX] - c[0];
-            float dy = vertices[i*FLOATS_PER_VERTEX+1] - c[1];
-            float dz = vertices[i*FLOATS_PER_VERTEX+2] - c[2];
-            float d = dx*dx + dy*dy + dz*dz;
-            if (d > r) r = d;
+            // Position du sommet dans le monde
+            Vector4f localPos = new Vector4f(
+                    vertices[i * FLOATS_PER_VERTEX],
+                    vertices[i * FLOATS_PER_VERTEX + 1],
+                    vertices[i * FLOATS_PER_VERTEX + 2],
+                    1.0f
+            );
+            localPos.mul(modelMatrix); // vers espace monde
+
+            Vector3f worldVertex = new Vector3f(localPos.x, localPos.y, localPos.z);
+
+            // Vecteur caméra -> sommet
+            Vector3f toVertex = new Vector3f(worldVertex).sub(camPos);
+            float distance = toVertex.length();
+
+            // 1. Test distance
+            if (distance > renderDistance) continue;
+
+            // 2. Test FOV avec tolérance
+            toVertex.normalize();
+            float cosAngle = camFront.dot(toVertex);
+
+            if (cosAngle >= cosFOV) {
+                anyInside = true;
+                break; // Un seul sommet visible suffit
+            }
         }
-        return (float)Math.sqrt(r);
+
+        return anyInside;
     }
 
     public void cleanup() {
@@ -197,6 +214,10 @@ public class Shape {
 
     public void setCamera(Camera camera) {
         this.camera = camera;
+    }
+
+    public void setModelMatrix(Matrix4f modelMatrix) {
+        this.modelMatrix = modelMatrix;
     }
 
     // Ajout automatique de slot couleur
