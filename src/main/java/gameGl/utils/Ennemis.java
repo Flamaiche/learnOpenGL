@@ -37,8 +37,6 @@ public class Ennemis extends Entity {
         this.shader = shader;
         setDeplacement(centerPlayer);
         updateModelMatrix();
-        corps.setCamera(camera);
-        corps.setModelMatrix(modelMatrix);
     }
 
     public void setDeplacement(float[] centerPlayer) {
@@ -92,6 +90,9 @@ public class Ennemis extends Entity {
     }
 
     public void render(Matrix4f view, Matrix4f projection) {
+        if (!corps.isVisible(projection, view, modelMatrix)) {
+            return;
+        }
         shader.bind();
         shader.setUniformMat4f("view", view);
         shader.setUniformMat4f("projection", projection);

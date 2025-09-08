@@ -21,8 +21,6 @@ public class Shape {
 
     private Shader shader = null;
     private Texture texture = null;  // Texture associée
-    private Camera camera = null;
-    private Matrix4f modelMatrix = new  Matrix4f().identity();
 
     public Shape(float[] vertices) {
         this.vertexCount = vertices.length / FLOATS_PER_VERTEX;
@@ -85,11 +83,6 @@ public class Shape {
     }
 
     public void render() {
-        if (camera != null) {
-            if (!isVisible(camera)) {
-                return; // pas rendu
-            }
-        }
         if (texture != null) texture.bind();
 
         glBindVertexArray(vaoId);
@@ -107,46 +100,35 @@ public class Shape {
         if (texture != null) texture.unbind();
     }
 
-    public boolean isVisible(Camera camera) {
-        if (camera == null) return true;
-
-        Vector3f camPos = camera.getPosition();
-        Vector3f camFront = camera.getFront();
-        float renderDistance = camera.getRenderDistance();
-        float fov = camera.getFov();
-
-        // Tolérance pour éviter disparition dans les coins
-        float fovPadding = 25.0f; // en degrés
-        float cosFOV = (float) Math.cos(Math.toRadians((fov + fovPadding) / 2.0));
-
+    public boolean isVisible(Matrix4f projection, Matrix4f view, Matrix4f modelMatrix) {
         boolean anyInside = false;
 
+        Matrix4f vpMatrix = new Matrix4f(projection).mul(view); // view-projection
+
         for (int i = 0; i < vertexCount; i++) {
-            // Position du sommet dans le monde
-            Vector4f localPos = new Vector4f(
+            Vector4f pos = new Vector4f(
                     vertices[i * FLOATS_PER_VERTEX],
                     vertices[i * FLOATS_PER_VERTEX + 1],
                     vertices[i * FLOATS_PER_VERTEX + 2],
                     1.0f
             );
-            localPos.mul(modelMatrix); // vers espace monde
 
-            Vector3f worldVertex = new Vector3f(localPos.x, localPos.y, localPos.z);
+            // Passage de local → world → clip space
+            pos.mul(modelMatrix).mul(vpMatrix);
 
-            // Vecteur caméra -> sommet
-            Vector3f toVertex = new Vector3f(worldVertex).sub(camPos);
-            float distance = toVertex.length();
+            // Perspective divide
+            if (pos.w != 0.0f) {
+                pos.x /= pos.w;
+                pos.y /= pos.w;
+                pos.z /= pos.w;
+            }
 
-            // 1. Test distance
-            if (distance > renderDistance) continue;
-
-            // 2. Test FOV avec tolérance
-            toVertex.normalize();
-            float cosAngle = camFront.dot(toVertex);
-
-            if (cosAngle >= cosFOV) {
+            // Test NDC [-1,1]
+            if (pos.x >= -1f && pos.x <= 1f &&
+                    pos.y >= -1f && pos.y <= 1f &&
+                    pos.z >= -1f && pos.z <= 1f) {
                 anyInside = true;
-                break; // Un seul sommet visible suffit
+                break; // au moins un sommet visible
             }
         }
 
@@ -212,14 +194,6 @@ public class Shape {
         return normalizedVertices;
     }
 
-    public void setCamera(Camera camera) {
-        this.camera = camera;
-    }
-
-    public void setModelMatrix(Matrix4f modelMatrix) {
-        this.modelMatrix = modelMatrix;
-    }
-
     // Ajout automatique de slot couleur
     public static float[] autoAddSlotColor(float[] vertices) {
         int vertexCount = vertices.length / 3; // 3 floats par sommet : x, y, z
@@ -252,7 +226,6 @@ public class Shape {
         }
         return verticesFullSlot;
     }
-
 
 // ----------------------
 // UTILITAIRES VECTORIELS
