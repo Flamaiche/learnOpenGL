@@ -188,7 +188,7 @@ public class SpaceShooter {
             int activeBalls = 0;
             for (Ball b : balls) if (b.isActive()) activeBalls++;
             int activeEnemies = 0;
-            for (Ennemis e : ennemis) if (e.isAlive()) activeEnemies++; // supposons méthode isAlive()
+            for (Ennemis e : ennemis) if (e.getVie() > 0) activeEnemies++;
 
             // Calcul distance cible
             float distanceTarget = 0;

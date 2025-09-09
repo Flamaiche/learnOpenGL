@@ -90,6 +90,7 @@ public class Ennemis extends Entity {
     }
 
     public void render(Matrix4f view, Matrix4f projection) {
+        if (vie <= 0) return;
         if (!corps.isVisible(projection, view, modelMatrix)) {
             return;
         }
@@ -145,10 +146,6 @@ public class Ennemis extends Entity {
 
     public boolean isHighlighted() {
         return highlighted;
-    }
-
-    public boolean isAlive() {
-        return vie > 0;
     }
 
     public Vector3f getPosition() { return position;}

@@ -112,7 +112,7 @@ public class Ball extends Entity {
         int score = 0;
 
         for (Ennemis enemy : enemies) {
-            if (!enemy.isAlive()) continue;
+            if (!(enemy.getVie() > 0)) continue;
 
             if (corps.intersectsOptimized(enemy.getCorps(), getModelMatrix(), enemy.getModelMatrix())) {
                 deactivate();
