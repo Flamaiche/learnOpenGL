@@ -1,0 +1,5 @@
+Version : (A:Alpha)
+A1.0 (08/09/2025): base du jeu Space Shooter avec vaisseau, ennemis, tirs et collisions.
+    09/09/2025: corrections mineures et améliorations de la jouabilité. Ajout collision joueur-ennemi.
+next : gyroscope et gestion souris.
+A1.1 ()
