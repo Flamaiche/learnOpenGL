@@ -16,9 +16,7 @@ public class TextManager {
 
     private final float margin = 20f;
     private final float lineHeight = 20f;
-    private final float uniformTextScale = 1.5f; // taille fixe
-
-    private double totalElapsedTime = 0.0;
+    private final float uniformTextScale = 1.5f;
 
     public TextManager(int initialWidth, int initialHeight) {
         this.windowWidth = initialWidth;
@@ -31,102 +29,93 @@ public class TextManager {
         this.windowHeight = height;
     }
 
+    public void setDebugMode(boolean debug) {
+        this.debugMode = debug;
+        for (TextHUD t : texts) {
+            switch (t.getType()) {
+                case FPS, POSITION, ORIENTATION, ACTIVE_BALLS, ACTIVE_ENEMIES, DISTANCE_TARGET -> t.setActive(debug);
+                default -> {}
+            }
+        }
+    }
+
     private void initTexts() {
-        float yOffset = 0f;
+        // HUD joueur (left/top)
+        texts.add(new TextHUD(TextHUD.TextType.SCORE, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.LIVES, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f)); // <-- nouveau
+        texts.add(new TextHUD(TextHUD.TextType.TIME, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.BALLS, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.ENEMIES, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
 
-        // HUD joueur (top-left) : violet foncé
-        texts.add(new TextHUD("Score: 0", 0, yOffset, uniformTextScale, 0.5f, 0f, 0.5f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Temps: 00:00", 0, yOffset, uniformTextScale, 0.5f, 0f, 0.5f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Balles: 0", 0, yOffset, uniformTextScale, 0.5f, 0f, 0.5f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Ennemis: 0", 0, yOffset, uniformTextScale, 0.5f, 0f, 0.5f));
-
-        // Debug (top-right) : rouge
-        yOffset = 0f;
-        texts.add(new TextHUD("FPS: 0", 0, yOffset, uniformTextScale, 1f, 0f, 0f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Position: 0,0,0", 0, yOffset, uniformTextScale, 1f, 0f, 0f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Orientation: 0,0,0", 0, yOffset, uniformTextScale, 1f, 0f, 0f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Balles actives: 0/0", 0, yOffset, uniformTextScale, 1f, 0f, 0f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Ennemis actifs: 0/0", 0, yOffset, uniformTextScale, 1f, 0f, 0f)); yOffset += lineHeight;
-        texts.add(new TextHUD("Distance cible: 0", 0, yOffset, uniformTextScale, 1f, 0f, 0f));
+        // Debug (right/top)
+        texts.add(new TextHUD(TextHUD.TextType.FPS, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.POSITION, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ORIENTATION, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_BALLS, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_ENEMIES, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.DISTANCE_TARGET, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
 
         setDebugMode(false);
     }
 
-    public void setDebugMode(boolean debug) {
-        this.debugMode = debug;
-        for (TextHUD t : texts) {
-            if (isDebugText(t)) t.setActive(debug);
-        }
-    }
-
-    private boolean isDebugText(TextHUD t) {
-        String c = t.getContent();
-        return c.startsWith("FPS") || c.startsWith("Position") || c.startsWith("Orientation")
-                || c.startsWith("Balles actives") || c.startsWith("Ennemis actifs")
-                || c.startsWith("Distance cible");
-    }
-
-    public void update(float deltaTime,
-                       int score, float fps,
-                       float playerX, float playerY, float playerZ,
-                       float pitch, float yaw, float roll,
-                       int ballsFired, int enemiesKilled,
-                       int activeBalls, int maxActiveBalls,
-                       int activeEnemies, int maxActiveEnemies,
-                       float distanceTarget,
-                       int currentWindowWidth,
-                       int currentWindowHeight) {
-
-        // Met à jour la taille de la fenêtre
+    public void update(float deltaTime, int currentWindowWidth, int currentWindowHeight) {
         setWindowSize(currentWindowWidth, currentWindowHeight);
-
-        totalElapsedTime += deltaTime;
-
-        for (TextHUD t : texts) {
-            String label = t.getContent();
-
-            if (label.startsWith("Score")) t.setContent("Score: " + score);
-            else if (label.startsWith("Temps")) {
-                int minutes = (int) (totalElapsedTime / 60);
-                int seconds = (int) (totalElapsedTime % 60);
-                t.setContent(String.format("Temps: %02d:%02d", minutes, seconds));
-            }
-            else if (label.startsWith("Balles:")) t.setContent("Balles: " + ballsFired);
-            else if (label.startsWith("Ennemis:")) t.setContent("Ennemis: " + enemiesKilled);
-
-            else if (label.startsWith("FPS")) t.setContent("FPS: " + (int) fps);
-            else if (label.startsWith("Position")) t.setContent(String.format("Position: %.1f, %.1f, %.1f", playerX, playerY, playerZ));
-            else if (label.startsWith("Orientation")) t.setContent(String.format("Orientation: %.1f, %.1f, %.1f", pitch, yaw, roll));
-            else if (label.startsWith("Balles actives")) t.setContent("Balles actives: " + activeBalls + "/" + maxActiveBalls);
-            else if (label.startsWith("Ennemis actifs")) t.setContent("Ennemis actifs: " + activeEnemies + "/" + maxActiveEnemies);
-            else if (label.startsWith("Distance cible")) t.setContent(String.format("Distance cible: %.1f", distanceTarget));
-        }
+        // Les valeurs des textes sont lues dynamiquement depuis GameData dans getText()
     }
 
     public void render(Shader shader) {
+        GameData data = GameData.getInstance();
+
         float scaleX = (float) windowWidth / baseWidth;
         float scaleY = (float) windowHeight / baseHeight;
         float uniformScale = Math.min(scaleX, scaleY);
 
+        // Offsets pour top et bottom
+        float yOffsetTopLeft = margin * uniformScale;
+        float yOffsetTopRight = margin * uniformScale;
+        float yOffsetBottomLeft = margin * uniformScale;
+        float yOffsetBottomRight = margin * uniformScale;
+
         for (TextHUD t : texts) {
             if (!t.isActive()) continue;
 
-            float renderY = t.getY() * uniformScale + margin * uniformScale;
-            float renderX;
+            String content = t.getText(data);
 
-            if (isDebugText(t)) {
-                float textWidth = Text.getTextWidth(t.getContent(), t.getScale() * uniformScale);
-                renderX = windowWidth - margin - textWidth;
-            } else {
-                renderX = margin * uniformScale;
+            // Calcul X
+            float renderX = (t.getHAlign() == TextHUD.Alignment.LEFT) ?
+                    margin * uniformScale :
+                    windowWidth - margin * uniformScale - Text.getTextWidth(content, t.getScale() * uniformScale);
+
+            // Calcul Y selon vAlign
+            float renderY;
+            if (t.getVAlign() == TextHUD.Alignment.TOP) {
+                renderY = (t.getHAlign() == TextHUD.Alignment.LEFT) ? yOffsetTopLeft : yOffsetTopRight;
+            } else { // BOTTOM
+                renderY = (t.getHAlign() == TextHUD.Alignment.LEFT) ?
+                        windowHeight - yOffsetBottomLeft - lineHeight * uniformScale :
+                        windowHeight - yOffsetBottomRight - lineHeight * uniformScale;
             }
 
+            // Affichage du texte
             Text.drawText(shader,
-                    t.getContent(),
+                    content,
                     renderX,
                     renderY,
                     t.getScale() * uniformScale,
                     t.getR(), t.getG(), t.getB());
+
+            // Incrément offset pour le prochain texte
+            if (t.getVAlign() == TextHUD.Alignment.TOP) {
+                if (t.getHAlign() == TextHUD.Alignment.LEFT)
+                    yOffsetTopLeft += lineHeight * uniformScale;
+                else
+                    yOffsetTopRight += lineHeight * uniformScale;
+            } else { // BOTTOM
+                if (t.getHAlign() == TextHUD.Alignment.LEFT)
+                    yOffsetBottomLeft += lineHeight * uniformScale;
+                else
+                    yOffsetBottomRight += lineHeight * uniformScale;
+            }
         }
     }
 }

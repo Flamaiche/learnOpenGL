@@ -125,7 +125,11 @@ public class SpaceShooter {
 
         // --- TextManager pour HUD & debug ---
         TextManager hud = new TextManager(width, height);
-        hud.setDebugMode(true); // true = affiche balls/ennemis actifs pour debug
+        hud.setDebugMode(true);
+
+        GameData data = GameData.getInstance();
+
+        Joueur joueur = new Joueur(ballShader, camera, 0.25f);
 
         double lastShootTime = 0;
         double shootCooldown = 0.3;
@@ -163,7 +167,7 @@ public class SpaceShooter {
             }
 
             // --- Update & rendu 3D via Manager3D ---
-            int point = Manager3D.updateAll(ennemis, balls, deltaTime, camera.getPosition());
+            int point = Manager3D.updateAll(ennemis, balls, joueur, deltaTime, camera.getPosition());
             if (point > 0) {
                 score += point;
                 enemiesKilledTotal++;
@@ -190,17 +194,22 @@ public class SpaceShooter {
                 }
             }
 
-            float fps = 1f / deltaTime;
+            // Met à jour GameData
+            data.setScore(score);
+            data.setLives(joueur.getVie());
+            data.setBallsFired(ballsFiredTotal);
+            data.setEnemiesKilled(enemiesKilledTotal);
+            data.setPlayerPosition(camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
+            data.setPlayerOrientation(camera.getPitch(), camera.getYaw(), camera.getRoll());
+            data.setActiveBalls(activeBalls, balls.size());
+            data.setActiveEnemies(activeEnemies, ennemis.size());
+            data.setDistanceTarget(distanceTarget);
+            data.setElapsedTime(data.getElapsedTime() + deltaTime);
+            data.setFPS(1.0f / deltaTime);
 
-            hud.update(deltaTime, score, fps,
-                    camera.getPosition().x, camera.getPosition().y, camera.getPosition().z,
-                    camera.getPitch(), camera.getYaw(), camera.getRoll(),
-                    ballsFiredTotal, enemiesKilledTotal,
-                    activeBalls, balls.size(),
-                    activeEnemies, ennemis.size(),
-                    distanceTarget, width, height);
-
+            hud.update(deltaTime, width, height);
             hud.render(textShader);
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();

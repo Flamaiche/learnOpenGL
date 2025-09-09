@@ -87,12 +87,8 @@ public class Ball extends Entity {
         for (Ennemis enemy : enemies) {
             if (enemy.getVie() <= 0) continue;
             if (corps.intersectsOptimized(enemy.getCorps(), modelMatrix, enemy.getModelMatrix())) {
-                enemy.decrementVie();
-                if (enemy.getVie() <= 0) {
-                    enemy.setDeplacement(new float[]{enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2, enemy.getDespawnDistance()*2});
-                    deactivate(); // balle disparait
-                    score += enemy.getScore();
-                }
+                deactivate(); // balle disparait
+                score+=enemy.touched();
             }
         }
         return score;

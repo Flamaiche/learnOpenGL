@@ -1,7 +1,9 @@
 package gameGl.tools;
 
+import gameGl.Joueur;
 import gameGl.utils.Ball;
 import gameGl.utils.Ennemis;
+import gameGl.utils.Entity;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -12,7 +14,7 @@ public class Manager3D {
     private Manager3D() {}
 
     // Update toutes les entités et retourne le score gagné
-    public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, float deltaTime, Vector3f playerPos) {
+    public static int updateAll(ArrayList<Ennemis> ennemis, ArrayList<Ball> balls, Joueur joueur, float deltaTime, Vector3f playerPos) {
         int score = 0;
 
         for (Ennemis e : ennemis) {
@@ -20,6 +22,16 @@ public class Manager3D {
                 e.setDeplacement(new float[] {playerPos.x, playerPos.y, playerPos.z});
             }
             e.update(deltaTime);
+        }
+
+        joueur.update(deltaTime);
+        Entity collised = joueur.checkCollision(new ArrayList<Entity>(ennemis));
+        if (collised != null) {
+            System.out.println("Collision Joueur-Ennemi !");
+            joueur.decrementVie();
+            if (collised instanceof Ennemis) {
+                score += ((Ennemis) collised).touched();
+            }
         }
 
         for (Ball b : balls) {

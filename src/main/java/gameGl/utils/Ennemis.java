@@ -121,6 +121,15 @@ public class Ennemis extends Entity {
         shader.unbind();
     }
 
+    public int touched() {
+        decrementVie();
+        if (getVie() <= 0) {
+            setDeplacement(new float[]{getDespawnDistance()*2, getDespawnDistance()*2, getDespawnDistance()*2});
+            return getScore();
+        }
+        return 0;
+    }
+
     public void cleanup() { corps.cleanup(); }
 
     public Shape getCorps() { return corps; }

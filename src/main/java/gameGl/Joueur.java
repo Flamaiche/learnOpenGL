@@ -1,0 +1,77 @@
+package gameGl;
+
+import gameGl.utils.Ball;
+import gameGl.utils.Ennemis;
+import learnGL.tools.Camera;
+import learnGL.tools.Shader;
+import learnGL.tools.Shape;
+import gameGl.tools.PreVerticesTable;
+import gameGl.utils.Entity;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
+import java.util.ArrayList;
+
+import static org.lwjgl.opengl.GL11C.*;
+
+public class Joueur extends Entity {
+    private Shape corps;        // corps = joueur
+    private Shader shader;
+    private Vector3f position;
+    private Matrix4f modelMatrix;
+    private int vie;
+
+    private Camera camera;
+
+    public Joueur(Shader shader, Camera camera, float taillecorps) {
+        this.corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generateCubeSimple(taillecorps)));
+        this.corps.setShader(shader);
+        this.corps.setColor(0f, 0f, 0f, 1f); // invisible ou debug
+
+        this.shader = shader;
+        this.position = new Vector3f(0f, 0f, 0f);
+        this.modelMatrix = new Matrix4f().identity().translate(position);
+
+        this.camera = camera;
+        vie = 3;
+    }
+
+    public void update(float deltaTime) {
+        position.set(camera.getPosition());
+        modelMatrix.identity().translate(position);
+    }
+
+    public void render(Matrix4f view, Matrix4f projection) {
+        if (!corps.isVisible(projection, view, modelMatrix)) {
+            return;
+        }
+
+        shader.bind();
+        shader.setUniformMat4f("view", view);
+        shader.setUniformMat4f("projection", projection);
+        shader.setUniformMat4f("model", modelMatrix);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        corps.setColor(0f, 0f, 0f, 1f);
+        corps.render();
+
+        shader.unbind();
+    }
+
+    public void cleanup(){
+        corps.cleanup();
+    }
+
+    public Entity checkCollision(ArrayList<Entity> entities){
+        for(Entity e : entities){
+            if (!(e instanceof Joueur) && !(e instanceof Ball)) {
+                if (corps.intersectsOptimized(e.getCorps(), modelMatrix, e.getModelMatrix())) return e;
+            }
+        }
+        return null;
+    }
+
+    public void setVie(int v) { vie = v; }
+    public int getVie() { return vie;}
+    public void decrementVie() { if (vie>0) vie--;}
+}
