@@ -1,4 +1,4 @@
-package gameGl.tools;
+package gameGl.gestion;
 
 public class GameData {
 

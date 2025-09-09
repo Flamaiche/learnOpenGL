@@ -1,4 +1,4 @@
-package gameGl.utils;
+package gameGl.entites;
 
 import learnGL.tools.Shape;
 import learnGL.tools.Shader;

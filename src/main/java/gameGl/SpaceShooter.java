@@ -1,7 +1,12 @@
 package gameGl;
 
-import gameGl.tools.*;
-import gameGl.utils.*;
+import gameGl.entites.*;
+import gameGl.gestion.GameData;
+import gameGl.gestion.Manager2D;
+import gameGl.gestion.Manager3D;
+import gameGl.gestion.texte.Text;
+import gameGl.gestion.texte.TextManager;
+import gameGl.utils.PreVerticesTable;
 import learnGL.tools.Camera;
 import learnGL.tools.Commande;
 import learnGL.tools.Shader;

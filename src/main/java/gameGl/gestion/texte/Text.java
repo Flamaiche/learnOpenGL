@@ -1,4 +1,4 @@
-package gameGl.tools;
+package gameGl.gestion.texte;
 
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;

@@ -1,12 +1,9 @@
-package gameGl;
+package gameGl.entites;
 
-import gameGl.utils.Ball;
-import gameGl.utils.Ennemis;
 import learnGL.tools.Camera;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
-import gameGl.tools.PreVerticesTable;
-import gameGl.utils.Entity;
+import gameGl.utils.PreVerticesTable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 

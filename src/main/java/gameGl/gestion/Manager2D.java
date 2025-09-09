@@ -1,8 +1,8 @@
-package gameGl.tools;
+package gameGl.gestion;
 
-import gameGl.utils.Crosshair;
-import gameGl.utils.Ennemis;
-import gameGl.utils.Entity2D;
+import gameGl.entites.Crosshair;
+import gameGl.entites.Ennemis;
+import gameGl.entites.Entity2D;
 import learnGL.tools.Camera;
 import org.joml.Matrix4f;
 import java.util.ArrayList;

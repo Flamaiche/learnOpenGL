@@ -1,10 +1,12 @@
-package gameGl.utils;
+package gameGl.entites;
 
-import gameGl.tools.PreVerticesTable;
+import gameGl.utils.PreVerticesTable;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Ball extends Entity {
@@ -41,18 +43,32 @@ public class Ball extends Entity {
         modelDirty = true;
     }
 
-    public void deactivate() {   active = false; }
+    public void deactivate() { active = false; }
     public boolean isActive() { return active; }
 
+    @Override
     public void update(float deltaTime) {
         if (!active) return;
 
-        position.fma(speed*deltaTime, direction);
-        rotation.x += rotationSpeed.x*deltaTime*rotationMultiplier;
-        rotation.y += rotationSpeed.y*deltaTime*rotationMultiplier;
-        rotation.z += rotationSpeed.z*deltaTime*rotationMultiplier;
+        // Déplacement total
+        Vector3f delta = new Vector3f(direction).mul(speed * deltaTime);
 
-        // désactivation si trop loin
+        // Découpage en mini-steps
+        float maxStep = 0.5f; // ajustable selon la taille des ennemis
+        int steps = (int) Math.ceil(delta.length() / maxStep);
+        Vector3f step = new Vector3f(delta).div(steps);
+
+        // Avance par mini-steps
+        for (int i = 0; i < steps; i++) {
+            position.add(step);
+        }
+
+        // Rotation
+        rotation.x += rotationSpeed.x * deltaTime * rotationMultiplier;
+        rotation.y += rotationSpeed.y * deltaTime * rotationMultiplier;
+        rotation.z += rotationSpeed.z * deltaTime * rotationMultiplier;
+
+        // Désactivation si trop loin
         if (position.distance(spawnPos) > maxDistance) deactivate();
 
         modelDirty = true;
@@ -81,16 +97,30 @@ public class Ball extends Entity {
 
     public void cleanup() { corps.cleanup(); }
 
-    public int collisionScore(Ennemis[] enemies) {
+    public Matrix4f getModelMatrix() {
+        Matrix4f m = new Matrix4f();
+        m.identity()
+                .translate(position)
+                .rotateX((float)Math.toRadians(rotation.x))
+                .rotateY((float)Math.toRadians(rotation.y))
+                .rotateZ((float)Math.toRadians(rotation.z));
+        return m;
+    }
+
+    public int checkCollision(ArrayList<Ennemis> enemies) {
         if (!active) return 0;
         int score = 0;
+
         for (Ennemis enemy : enemies) {
-            if (enemy.getVie() <= 0) continue;
-            if (corps.intersectsOptimized(enemy.getCorps(), modelMatrix, enemy.getModelMatrix())) {
-                deactivate(); // balle disparait
-                score+=enemy.touched();
+            if (!enemy.isAlive()) continue;
+
+            if (corps.intersectsOptimized(enemy.getCorps(), getModelMatrix(), enemy.getModelMatrix())) {
+                deactivate();
+                score += enemy.touched();
+                break; // stop après la première collision
             }
         }
+
         return score;
     }
 

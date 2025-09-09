@@ -1,6 +1,6 @@
-package gameGl.tools;
+package gameGl.gestion.texte;
 
-import gameGl.tools.GameData;
+import gameGl.gestion.GameData;
 
 public class TextHUD {
 

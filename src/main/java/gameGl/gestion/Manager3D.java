@@ -1,9 +1,9 @@
-package gameGl.tools;
+package gameGl.gestion;
 
-import gameGl.Joueur;
-import gameGl.utils.Ball;
-import gameGl.utils.Ennemis;
-import gameGl.utils.Entity;
+import gameGl.entites.Joueur;
+import gameGl.entites.Ball;
+import gameGl.entites.Ennemis;
+import gameGl.entites.Entity;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -39,7 +39,7 @@ public class Manager3D {
 
             b.update(deltaTime);
 
-            score += b.collisionScore(ennemis.toArray(new Ennemis[0]));
+            score += b.checkCollision(ennemis);
         }
 
         return score;

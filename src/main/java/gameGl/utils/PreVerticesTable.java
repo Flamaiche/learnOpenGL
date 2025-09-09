@@ -1,4 +1,4 @@
-package gameGl.tools;
+package gameGl.utils;
 
 import org.joml.Vector3f;
 

@@ -1,4 +1,4 @@
-package gameGl.utils;
+package gameGl.entites;
 
 import org.joml.Matrix4f;
 
