@@ -1,6 +1,7 @@
 package gameGl.entites;
 
 import learnGL.tools.Camera;
+import learnGL.tools.Commande;
 import learnGL.tools.Shader;
 import learnGL.tools.Shape;
 import gameGl.utils.PreVerticesTable;
@@ -18,9 +19,11 @@ public class Joueur extends Entity {
     private Matrix4f modelMatrix;
     private int vie;
 
+    public Commande cmd;
     private Camera camera;
 
-    public Joueur(Shader shader, Camera camera, float taillecorps) {
+    public Joueur(Shader shader, Camera camera, long window, float taillecorps) {
+        cmd = new Commande(camera, window);
         this.corps = new Shape(Shape.autoAddSlotColor(PreVerticesTable.generateCubeSimple(taillecorps)));
         this.corps.setShader(shader);
         this.corps.setColor(0f, 0f, 0f, 1f); // invisible ou debug
@@ -34,6 +37,7 @@ public class Joueur extends Entity {
     }
 
     public void update(float deltaTime) {
+        cmd.update();
         position.set(camera.getPosition());
         modelMatrix.identity().translate(position);
     }

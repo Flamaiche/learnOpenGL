@@ -89,10 +89,8 @@ public class SpaceShooter {
         glClearColor(1f, 1f, 0f, 0f); // fond jaune
         glViewport(0, 0, width, height);
 
-        // camera et commandes
+        // camera
         Camera camera = new Camera(new Vector3f(0, 0, 3));
-        Commande cmd = new Commande(camera, window);
-        cmd.vitesseRotation = 1.0f;
 
         // shaders
         Shader ennemisShader = new Shader("shaders/EnnemisVertex.glsl", "shaders/EnnemisFragment.glsl");
@@ -127,7 +125,7 @@ public class SpaceShooter {
         TextManager hud = new TextManager(width, height);
         hud.setDebugMode(true);
         GameData data = GameData.getInstance();
-        Joueur joueur = new Joueur(ballShader, camera, 0.25f);
+        Joueur joueur = new Joueur(ballShader, camera, window, 0.25f);
 
         double lastTime = glfwGetTime();
         int score = 0;
@@ -144,14 +142,11 @@ public class SpaceShooter {
             float deltaTime = (float) (currentTime - lastTime);
             lastTime = currentTime;
 
-            // update commandes (clavier + souris)
-            cmd.update();
-
             Matrix4f viewMatrix = camera.getViewMatrix();
             Matrix4f projection = camera.getProjection(width, height);
 
             // Tir
-            if (cmd.canShoot()) {
+            if (joueur.cmd.canShoot()) {
                 Vector3f spawnPos = new Vector3f(camera.getPosition()).add(new Vector3f(camera.getFront()).mul(0.5f));
                 for (Ball b : balls) {
                     if (!b.isActive()) {

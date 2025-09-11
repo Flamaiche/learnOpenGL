@@ -7,7 +7,7 @@ public class Commande {
     private Camera camera;
     private long window;
     public static float vitesse = 0.05f;
-    public static float vitesseRotation = 2.0f;
+    public static float vitesseRotation = 1.0f;
     private float rollSpeed = 1f; // vitesse roll Q/E
 
     private float mouseSensitivity = 0.1f;
