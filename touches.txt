@@ -1,27 +1,31 @@
 DEPLACEMENT
-Z      : avancer
-S          : reculer
-Q      : aller à gauche
-D          : aller à droite
-MAJ (SHIFT): monter
-CTRL       : descendre
+Z               : avancer
+S               : reculer
+Q               : aller à gauche
+D               : aller à droite
+MAJ (SHIFT)     : monter
+CTRL            : descendre
 
 ROTATION CAMERA
-Flèche gauche  : tourner à gauche
-Flèche droite  : tourner à droite
-Flèche haut    : regarder vers le haut
-Flèche bas     : regarder vers le bas
+Flèche gauche   : tourner la caméra à gauche
+Flèche droite   : tourner la caméra à droite
+Flèche haut     : regarder vers le haut
+Flèche bas      : regarder vers le bas
+
+ROLL DU MONDE
+A               : faire tourner le monde à gauche
+E               : faire tourner le monde à droite
 
 MODE CAMERA
-ESPACE : activer/désactiver le mode orbite (caméra libre / orbite)
+ESPACE          : activer/désactiver le mode orbite (caméra libre / orbite)
 
 SOURIS
-Déplacement : faire tourner la caméra (si curseur capturé)
-Bouton gauche : tirer
-TAB : activer/désactiver le curseur (libérer ou capturer la souris)
+Déplacement     : faire tourner la caméra (si curseur capturé)
+Bouton gauche   : tirer
+CAPS LOCK       : activer/désactiver le curseur (libérer ou capturer la souris) (verr. maj)
 
 GESTION DU JEU
-ECHAP : quitter le jeu
+ECHAP           : quitter le jeu
 
 HUD / DEBUG
-    : menu de debug
+                : menu de debug
