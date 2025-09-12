@@ -3,12 +3,12 @@ package learnGL.tools;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
-import static org.lwjgl.opengl.GL20.*;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.FloatBuffer;
+
+import static org.lwjgl.opengl.GL20.*;
 
 public class Shader {
     private int programId;
@@ -18,16 +18,16 @@ public class Shader {
     private String vertexCode;
     private String fragmentCode;
 
-    public Shader(String vertexPath, String fragmentPath) throws IOException {
+    public Shader(String vertexPath, String fragmentPath) {
         vertexCode = readFileFromResources(vertexPath);
         fragmentCode = readFileFromResources(fragmentPath);
         compile();
     }
 
-    private String readFileFromResources(String fileName) throws IOException {
+    private String readFileFromResources(String fileName) {
         try (InputStream in = Shader.class.getClassLoader().getResourceAsStream(fileName)) {
             if (in == null) {
-                throw new IOException("Resource not found: " + fileName);
+                throw new RuntimeException("Resource not found: " + fileName);
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             StringBuilder sb = new StringBuilder();
@@ -36,6 +36,8 @@ public class Shader {
                 sb.append(line).append("\n");
             }
             return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error reading resource: " + fileName, e);
         }
     }
 
@@ -49,7 +51,7 @@ public class Shader {
         glShaderSource(vertexShaderId, vertexCode);
         glCompileShader(vertexShaderId);
         if (glGetShaderi(vertexShaderId, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.err.println("Erreur compilation vertex shader : " + glGetShaderInfoLog(vertexShaderId));
+            throw new RuntimeException("Erreur compilation vertex shader : " + glGetShaderInfoLog(vertexShaderId));
         }
 
         // Fragment shader
@@ -57,7 +59,7 @@ public class Shader {
         glShaderSource(fragmentShaderId, fragmentCode);
         glCompileShader(fragmentShaderId);
         if (glGetShaderi(fragmentShaderId, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.err.println("Erreur compilation fragment shader : " + glGetShaderInfoLog(fragmentShaderId));
+            throw new RuntimeException("Erreur compilation fragment shader : " + glGetShaderInfoLog(fragmentShaderId));
         }
 
         // Programme
@@ -67,7 +69,7 @@ public class Shader {
         glLinkProgram(programId);
 
         if (glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
-            System.err.println("Erreur linkage shader : " + glGetProgramInfoLog(programId));
+            throw new RuntimeException("Erreur linkage shader : " + glGetProgramInfoLog(programId));
         }
     }
 
