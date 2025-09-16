@@ -8,8 +8,7 @@ Idée de futur update :
 - Class Joueur :
     - Shape du joueur
     - vie
-    - gerer Commande (tout ce qui est vitesse)
-    - gerer ToucheCommande
+    - score
     - bestScore
 - Class ToucheCommande :
     - liste des touches
