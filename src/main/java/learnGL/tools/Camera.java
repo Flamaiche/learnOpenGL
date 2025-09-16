@@ -31,6 +31,8 @@ public class Camera {
     // Roll
     private float rollAngle = 0f; // en degrés
 
+    private static final float EPSILON = 1e-4f;
+
     public Camera(Vector3f position) {
         this.position = new Vector3f(position);
         this.front = new Vector3f(0,0,-1);
@@ -63,6 +65,7 @@ public class Camera {
     public void setCommandeRoll(boolean active) {
         this.commandeRoll = active;
         rollAngle = 0f; // reset pour éviter un décalage visuel
+        updateCameraVectors();
     }
 
     public boolean isCommandeRoll() { return commandeRoll; }
@@ -75,12 +78,9 @@ public class Camera {
 
         Matrix4f view = new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
 
-        if (!commandeRoll && rollAngle != 0f) {
-            // FPS classique : roll purement visuel
-            Vector3f camToOrigin = new Vector3f(position).negate();
-            view.translate(camToOrigin)
-                    .rotate((float)Math.toRadians(rollAngle), front.x, front.y, front.z)
-                    .translate(position.negate(camToOrigin));
+        // Roll visuel uniquement si FPS classique et roll non nul
+        if (!commandeRoll && Math.abs(rollAngle) > EPSILON) {
+            view.rotate((float)Math.toRadians(rollAngle), front.x, front.y, front.z);
         }
 
         return view;
@@ -153,11 +153,13 @@ public class Camera {
         front.normalize();
 
         if (!commandeRoll) {
+            // FPS classique : haut du monde fixe
             droite = new Vector3f(front).cross(hautDuMonde).normalize();
             if (droite.lengthSquared() < 1e-8f)
                 droite = new Vector3f(1,0,0).cross(front).normalize();
-            up = new Vector3f(droite).cross(front).normalize();
+            up.set(hautDuMonde);
         } else {
+            // Cockpit : haut et droite tournent avec le roll
             droite = new Vector3f(front).cross(up).normalize();
             up = new Vector3f(droite).cross(front).normalize();
         }
