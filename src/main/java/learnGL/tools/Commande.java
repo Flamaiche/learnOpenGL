@@ -1,14 +1,15 @@
 package learnGL.tools;
-    
+
 import org.lwjgl.glfw.GLFW;
 import org.joml.Vector3f;
+import java.util.ArrayList;
 
 public class Commande {
     private Camera camera;
     private long window;
     public static float vitesse = 0.05f;
     public static float vitesseRotation = 1.0f;
-    private float rollSpeed = 1f; // vitesse roll Q/E
+    private float rollSpeed = 1f;
 
     private float mouseSensitivity = 0.1f;
     private double lastMouseX;
@@ -19,64 +20,110 @@ public class Commande {
     private double lastShootTime = 0;
     private double shootCooldown = 0.3;
 
+    private ArrayList<Touche> touches = new ArrayList<>();
+
     public Commande(Camera camera, long window) {
         this.camera = camera;
         this.window = window;
+
         GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
-        GLFW.glfwSetCursorPosCallback(window, (win,xpos,ypos)->{
-            if(!mouseLocked) return;
-            if(firstMouseInput){ lastMouseX=xpos; lastMouseY=ypos; firstMouseInput=false; }
-            double deltaX = xpos-lastMouseX;
-            double deltaY = lastMouseY-ypos;
-            lastMouseX=xpos; lastMouseY=ypos;
-            camera.rotate((float)(deltaX*mouseSensitivity),(float)(deltaY*mouseSensitivity));
+        GLFW.glfwSetCursorPosCallback(window, (win, xpos, ypos) -> {
+            if (!mouseLocked) return;
+            if (firstMouseInput) {
+                lastMouseX = xpos;
+                lastMouseY = ypos;
+                firstMouseInput = false;
+            }
+            double deltaX = xpos - lastMouseX;
+            double deltaY = lastMouseY - ypos;
+            lastMouseX = xpos;
+            lastMouseY = ypos;
+            camera.rotate((float)(deltaX * mouseSensitivity), (float)(deltaY * mouseSensitivity));
+        });
+
+        initTouches();
+
+        // Reset touches si la fenêtre perd le focus
+        GLFW.glfwSetWindowFocusCallback(window, (win, focused) -> {
+            if (!focused) {
+                for (Touche t : touches) {
+                    t.reset();
+                }
+            }
         });
     }
 
-    public void update() {
-        // CAPS_LOCK souris
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_CAPS_LOCK)==GLFW.GLFW_PRESS){
-            if(mouseLocked){ GLFW.glfwSetInputMode(window,GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_NORMAL); mouseLocked=false; }
-            else{ firstMouseInput=true; GLFW.glfwSetInputMode(window,GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_DISABLED); mouseLocked=true; }
-            while(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_CAPS_LOCK)==GLFW.GLFW_PRESS) GLFW.glfwPollEvents();
-        }
+    private void initTouches() {
+        // CAPS_LOCK → lock/unlock souris
+        touches.add(new Touche(GLFW.GLFW_KEY_CAPS_LOCK,
+                () -> { // onPress
+                    if (mouseLocked) {
+                        GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+                        mouseLocked = false;
+                    } else {
+                        firstMouseInput = true;
+                        GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+                        mouseLocked = true;
+                    }
+                },
+                null, null
+        ));
 
-        // ESC fermer
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_ESCAPE)==GLFW.GLFW_PRESS) GLFW.glfwSetWindowShouldClose(window,true);
+        // ESC → fermer la fenêtre
+        touches.add(new Touche(GLFW.GLFW_KEY_ESCAPE,
+                () -> GLFW.glfwSetWindowShouldClose(window, true),
+                null, null
+        ));
 
-        // espace orbite
-        camera.setOrbitMode(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_SPACE)==GLFW.GLFW_PRESS);
+        // Espace → mode orbite tant que pressée
+        touches.add(new Touche(GLFW.GLFW_KEY_SPACE,
+                null,                            // pas besoin d’action à l’appui unique
+                () -> camera.setOrbitMode(false), // relâchement → désactiver orbite
+                () -> camera.setOrbitMode(true)   // tant que pressée → orbite active
+        ));
 
-        // déplacement
-        Vector3f move=new Vector3f();
-        if(!camera.isOrbitMode()){
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_W)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(vitesse));
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_S)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getFront()).mul(-vitesse));
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_D)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(vitesse));
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_A)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getDroite()).mul(-vitesse));
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_LEFT_SHIFT)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(vitesse));
-            if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_LEFT_CONTROL)==GLFW.GLFW_PRESS) move.add(new Vector3f(camera.getUp()).mul(-vitesse));
-        }
-        camera.move(move);
+        // Roll Q/E
+        touches.add(new Touche(GLFW.GLFW_KEY_Q, null, null, () -> camera.addRoll(-rollSpeed)));
+        touches.add(new Touche(GLFW.GLFW_KEY_E, null, null, () -> camera.addRoll(rollSpeed)));
 
-        // rotation flèches
-        float rotH=0, rotV=0;
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_LEFT)==GLFW.GLFW_PRESS) rotH-=vitesseRotation;
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_RIGHT)==GLFW.GLFW_PRESS) rotH+=vitesseRotation;
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_UP)==GLFW.GLFW_PRESS) rotV+=vitesseRotation;
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_DOWN)==GLFW.GLFW_PRESS) rotV-=vitesseRotation;
-        camera.rotate(rotH, rotV);
+        // Déplacements WASD + SHIFT/CTRL
+        touches.add(new Touche(GLFW.GLFW_KEY_W, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getFront()).mul(vitesse));
+        }));
+        touches.add(new Touche(GLFW.GLFW_KEY_S, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getFront()).mul(-vitesse));
+        }));
+        touches.add(new Touche(GLFW.GLFW_KEY_D, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getDroite()).mul(vitesse));
+        }));
+        touches.add(new Touche(GLFW.GLFW_KEY_A, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getDroite()).mul(-vitesse));
+        }));
+        touches.add(new Touche(GLFW.GLFW_KEY_LEFT_SHIFT, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getUp()).mul(vitesse));
+        }));
+        touches.add(new Touche(GLFW.GLFW_KEY_LEFT_CONTROL, null, null, () -> {
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getUp()).mul(-vitesse));
+        }));
 
-        // roll Q/E
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_Q)==GLFW.GLFW_PRESS) camera.addRoll(-rollSpeed);
-        if(GLFW.glfwGetKey(window,GLFW.GLFW_KEY_E)==GLFW.GLFW_PRESS) camera.addRoll(rollSpeed);
+        // Flèches → rotation caméra
+        touches.add(new Touche(GLFW.GLFW_KEY_LEFT, null, null, () -> camera.rotate(-vitesseRotation, 0f)));
+        touches.add(new Touche(GLFW.GLFW_KEY_RIGHT, null, null, () -> camera.rotate(vitesseRotation, 0f)));
+        touches.add(new Touche(GLFW.GLFW_KEY_UP, null, null, () -> camera.rotate(0f, vitesseRotation)));
+        touches.add(new Touche(GLFW.GLFW_KEY_DOWN, null, null, () -> camera.rotate(0f, -vitesseRotation)));
     }
 
-    public boolean canShoot(){
-        double currentTime=GLFW.glfwGetTime();
-        if(GLFW.glfwGetMouseButton(window,GLFW.GLFW_MOUSE_BUTTON_LEFT)==GLFW.GLFW_PRESS
-                && currentTime-lastShootTime>=shootCooldown){
-            lastShootTime=currentTime;
+    public void update() {
+        for (Touche t : touches) {
+            t.update(window);
+        }
+    }
+
+    public boolean canShoot() {
+        double currentTime = GLFW.glfwGetTime();
+        if (GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS
+                && currentTime - lastShootTime >= shootCooldown) {
+            lastShootTime = currentTime;
             return true;
         }
         return false;
