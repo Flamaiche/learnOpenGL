@@ -1,5 +1,5 @@
 package learnGL.tools;
-
+    
 import org.lwjgl.glfw.GLFW;
 import org.joml.Vector3f;
 
