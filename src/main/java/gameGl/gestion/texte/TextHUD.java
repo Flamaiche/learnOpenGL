@@ -4,8 +4,8 @@ import gameGl.gestion.GameData;
 
 public class TextHUD {
 
-    public enum HorizontalAlignment { LEFT, RIGHT }
-    public enum VerticalAlignment { TOP, BOTTOM }
+    public enum HorizontalAlignment { LEFT, CENTER, RIGHT }
+    public enum VerticalAlignment { TOP, CENTER, BOTTOM }
 
     public enum TextType {
         SCORE, LIVES, TIME, BALLS, ENEMIES,
