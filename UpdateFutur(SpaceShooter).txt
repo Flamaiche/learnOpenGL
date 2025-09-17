@@ -28,3 +28,4 @@ Idée de futur update :
 - upgrade du joueur :
     - différent type de balles (couleur, vitesse, taille, fonction)
     - achetable avec le score
+- correction bug ball-roll alignement
