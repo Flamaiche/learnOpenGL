@@ -4,7 +4,8 @@ import gameGl.gestion.GameData;
 
 public class TextHUD {
 
-    public enum Alignment { LEFT, RIGHT, TOP, BOTTOM }
+    public enum HorizontalAlignment { LEFT, RIGHT }
+    public enum VerticalAlignment { TOP, BOTTOM }
 
     public enum TextType {
         SCORE, LIVES, TIME, BALLS, ENEMIES,
@@ -12,13 +13,13 @@ public class TextHUD {
     }
 
     private final TextType type;
-    private final Alignment hAlign;
-    private final Alignment vAlign;
+    private final HorizontalAlignment hAlign;
+    private final VerticalAlignment vAlign;
     private final float scale;
     private final float r, g, b;
     private boolean active = true;
 
-    public TextHUD(TextType type, Alignment hAlign, Alignment vAlign, float scale, float r, float g, float b) {
+    public TextHUD(TextType type, HorizontalAlignment hAlign, VerticalAlignment vAlign, float scale, float r, float g, float b) {
         this.type = type;
         this.hAlign = hAlign;
         this.vAlign = vAlign;
@@ -29,8 +30,8 @@ public class TextHUD {
     }
 
     public TextType getType() { return type; }
-    public Alignment getHAlign() { return hAlign; }
-    public Alignment getVAlign() { return vAlign; }
+    public HorizontalAlignment getHAlign() { return hAlign; }
+    public VerticalAlignment getVAlign() { return vAlign; }
     public float getScale() { return scale; }
     public float getR() { return r; }
     public float getG() { return g; }

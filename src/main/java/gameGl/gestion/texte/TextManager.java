@@ -42,19 +42,19 @@ public class TextManager {
 
     private void initTexts() {
         // HUD joueur (left/top)
-        texts.add(new TextHUD(TextHUD.TextType.SCORE, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
-        texts.add(new TextHUD(TextHUD.TextType.LIVES, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f)); // <-- nouveau
-        texts.add(new TextHUD(TextHUD.TextType.TIME, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
-        texts.add(new TextHUD(TextHUD.TextType.BALLS, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
-        texts.add(new TextHUD(TextHUD.TextType.ENEMIES, TextHUD.Alignment.LEFT, TextHUD.Alignment.TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.SCORE, TextHUD.HorizontalAlignment.LEFT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.LIVES, TextHUD.HorizontalAlignment.LEFT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 0.5f, 0f, 0.5f)); // <-- nouveau
+        texts.add(new TextHUD(TextHUD.TextType.TIME, TextHUD.HorizontalAlignment.LEFT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.BALLS, TextHUD.HorizontalAlignment.LEFT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 0.5f, 0f, 0.5f));
+        texts.add(new TextHUD(TextHUD.TextType.ENEMIES, TextHUD.HorizontalAlignment.LEFT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 0.5f, 0f, 0.5f));
 
         // Debug (right/top)
-        texts.add(new TextHUD(TextHUD.TextType.FPS, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
-        texts.add(new TextHUD(TextHUD.TextType.POSITION, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
-        texts.add(new TextHUD(TextHUD.TextType.ORIENTATION, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
-        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_BALLS, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
-        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_ENEMIES, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
-        texts.add(new TextHUD(TextHUD.TextType.DISTANCE_TARGET, TextHUD.Alignment.RIGHT, TextHUD.Alignment.TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.FPS, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.POSITION, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ORIENTATION, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_BALLS, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.ACTIVE_ENEMIES, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
+        texts.add(new TextHUD(TextHUD.TextType.DISTANCE_TARGET, TextHUD.HorizontalAlignment.RIGHT, TextHUD.VerticalAlignment .TOP, uniformTextScale, 1f, 0f, 0f));
 
         setDebugMode(false);
     }
@@ -83,16 +83,16 @@ public class TextManager {
             String content = t.getText(data);
 
             // Calcul X
-            float renderX = (t.getHAlign() == TextHUD.Alignment.LEFT) ?
+            float renderX = (t.getHAlign() == TextHUD.HorizontalAlignment.LEFT) ?
                     margin * uniformScale :
                     windowWidth - margin * uniformScale - Text.getTextWidth(content, t.getScale() * uniformScale);
 
             // Calcul Y selon vAlign
             float renderY;
-            if (t.getVAlign() == TextHUD.Alignment.TOP) {
-                renderY = (t.getHAlign() == TextHUD.Alignment.LEFT) ? yOffsetTopLeft : yOffsetTopRight;
+            if (t.getVAlign() == TextHUD.VerticalAlignment .TOP) {
+                renderY = (t.getHAlign() == TextHUD.HorizontalAlignment.LEFT) ? yOffsetTopLeft : yOffsetTopRight;
             } else { // BOTTOM
-                renderY = (t.getHAlign() == TextHUD.Alignment.LEFT) ?
+                renderY = (t.getHAlign() == TextHUD.HorizontalAlignment.LEFT) ?
                         windowHeight - yOffsetBottomLeft - lineHeight * uniformScale :
                         windowHeight - yOffsetBottomRight - lineHeight * uniformScale;
             }
@@ -106,13 +106,13 @@ public class TextManager {
                     t.getR(), t.getG(), t.getB());
 
             // Incrément offset pour le prochain texte
-            if (t.getVAlign() == TextHUD.Alignment.TOP) {
-                if (t.getHAlign() == TextHUD.Alignment.LEFT)
+            if (t.getVAlign() == TextHUD.VerticalAlignment .TOP) {
+                if (t.getHAlign() == TextHUD.HorizontalAlignment.LEFT)
                     yOffsetTopLeft += lineHeight * uniformScale;
                 else
                     yOffsetTopRight += lineHeight * uniformScale;
             } else { // BOTTOM
-                if (t.getHAlign() == TextHUD.Alignment.LEFT)
+                if (t.getHAlign() == TextHUD.HorizontalAlignment.LEFT)
                     yOffsetBottomLeft += lineHeight * uniformScale;
                 else
                     yOffsetBottomRight += lineHeight * uniformScale;
