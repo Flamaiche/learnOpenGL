@@ -45,9 +45,6 @@ public class Camera {
         initOrbitFromCurrentState();
     }
 
-    // --------------------------
-    // Modes
-    // --------------------------
     public void setOrbitMode(boolean active) {
         if (active == orbitMode) return;
         if (active) { initOrbitFromCurrentState(); alignAxesToTarget(); }
@@ -70,9 +67,6 @@ public class Camera {
 
     public boolean isCommandeRoll() { return commandeRoll; }
 
-    // --------------------------
-    // View Matrix
-    // --------------------------
     public Matrix4f getViewMatrix() {
         if (orbitMode) alignAxesToTarget();
 
@@ -86,16 +80,10 @@ public class Camera {
         return view;
     }
 
-    // --------------------------
-    // Déplacements
-    // --------------------------
     public void move(Vector3f offset) {
         if (!orbitMode) position.add(offset);
     }
 
-    // --------------------------
-    // Rotations horizontale / verticale
-    // --------------------------
     public void rotate(float offsetHorizontal, float offsetVertical) {
         if (!orbitMode) {
             angleHorizontal += offsetHorizontal;
@@ -122,9 +110,6 @@ public class Camera {
         }
     }
 
-    // --------------------------
-    // Roll
-    // --------------------------
     public void addRoll(float delta) {
         rollAngle += delta;
 
@@ -140,9 +125,6 @@ public class Camera {
 
     public float getRoll() { return rollAngle; }
 
-    // --------------------------
-    // Calcul des vecteurs caméra
-    // --------------------------
     private void updateCameraVectors() {
         double yawRad = Math.toRadians(angleHorizontal);
         double pitchRad = Math.toRadians(angleVertical);
@@ -165,9 +147,6 @@ public class Camera {
         }
     }
 
-    // --------------------------
-    // Orbit tools
-    // --------------------------
     private void initOrbitFromCurrentState() {
         Vector3f rel = new Vector3f(position).sub(cible);
         orbitRadius = rel.length();
@@ -185,9 +164,6 @@ public class Camera {
         up.set(new Vector3f(droite).cross(front).normalize());
     }
 
-    // --------------------------
-    // Getters / Setters
-    // --------------------------
     public Vector3f getPosition(){ return new Vector3f(position); }
     public Vector3f getFront(){ return new Vector3f(front); }
     public Vector3f getDroite(){ return new Vector3f(droite); }

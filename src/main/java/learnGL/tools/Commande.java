@@ -3,6 +3,8 @@ package learnGL.tools;
 import org.lwjgl.glfw.GLFW;
 import org.joml.Vector3f;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Commande {
     private Camera camera;
@@ -20,7 +22,11 @@ public class Commande {
     private double lastShootTime = 0;
     private double shootCooldown = 0.3;
 
-    private ArrayList<Touche> touches = new ArrayList<>();
+    private ArrayList<Touche> touches = new ArrayList<>(); // actuellement laissé mais pas utilisé
+    private GameState gameStateLast = GameState.PLAYING;
+    private GameState gameState = GameState.PLAYING;
+    private Map<GameState, ArrayList<Touche>> toucheState = new HashMap<>();
+    private int upDownMenu = 0;
 
     public Commande(Camera camera, long window) {
         this.camera = camera;
@@ -54,7 +60,9 @@ public class Commande {
     }
 
     private void initTouches() {
-        // CAPS_LOCK → lock/unlock souris
+        int nbTouches = 0;
+
+        // CAPS_LOCK -> lock/unlock souris
         touches.add(new Touche(GLFW.GLFW_KEY_CAPS_LOCK,
                 () -> { // onPress
                     if (mouseLocked) {
@@ -69,17 +77,17 @@ public class Commande {
                 null, null
         ));
 
-        // ESC → fermer la fenêtre
+        // ESC -> fermer la fenêtre
         touches.add(new Touche(GLFW.GLFW_KEY_ESCAPE,
                 () -> GLFW.glfwSetWindowShouldClose(window, true),
                 null, null
         ));
 
-        // Espace → mode orbite tant que pressée
+        // Espace -> mode orbite tant que pressée
         touches.add(new Touche(GLFW.GLFW_KEY_SPACE,
                 null,                            // pas besoin d’action à l’appui unique
-                () -> camera.setOrbitMode(false), // relâchement → désactiver orbite
-                () -> camera.setOrbitMode(true)   // tant que pressée → orbite active
+                () -> camera.setOrbitMode(false), // relâchement -> désactiver orbite
+                () -> camera.setOrbitMode(true)   // tant que pressée -> orbite active
         ));
 
         // Roll Q/E
@@ -106,11 +114,32 @@ public class Commande {
             if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getUp()).mul(-vitesse));
         }));
 
-        // Flèches → rotation caméra
+        // Flèches -> rotation caméra
         touches.add(new Touche(GLFW.GLFW_KEY_LEFT, null, null, () -> camera.rotate(-vitesseRotation, 0f)));
         touches.add(new Touche(GLFW.GLFW_KEY_RIGHT, null, null, () -> camera.rotate(vitesseRotation, 0f)));
         touches.add(new Touche(GLFW.GLFW_KEY_UP, null, null, () -> camera.rotate(0f, vitesseRotation)));
         touches.add(new Touche(GLFW.GLFW_KEY_DOWN, null, null, () -> camera.rotate(0f, -vitesseRotation)));
+
+        // VOIR CANSHOOT()
+        addMap(GameState.PLAYING, nbTouches);
+        nbTouches = touches.size() - nbTouches;
+
+        touches.add(new Touche(GLFW.GLFW_KEY_LEFT_SHIFT, () -> upDownMenu++, null, null));
+        touches.add(new Touche(GLFW.GLFW_KEY_LEFT_CONTROL, () -> upDownMenu--, null, null));
+        touches.add(new Touche(GLFW.GLFW_KEY_ENTER, () -> upDownMenu = upDownMenu, null, null));
+
+        // VOIR ISSELECTEDMENU()
+        addMap(GameState.MAIN_MENU, nbTouches);
+        nbTouches = touches.size() - nbTouches;
+
+    }
+
+    private void addMap(GameState gameState, int nbTouches) {
+        ArrayList<Touche> tmpTouches = new ArrayList<>();
+        for (int i = nbTouches; i < touches.size(); i++) {
+            tmpTouches.add(touches.get(i));
+        }
+        toucheState.put(gameState, tmpTouches);
     }
 
     public void update() {
@@ -128,4 +157,43 @@ public class Commande {
         }
         return false;
     }
+
+    public boolean pressed(int glfwKey) {
+        for (Touche t : toucheState.get(gameState)) if (t.getKey() == glfwKey) return t.update(window);
+        return false;
+    }
+
+    public void setActiveAllTouche(boolean active, ArrayList<Touche> t) {
+        for (Touche touche : t) {
+            touche.setActive(active);
+        }
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+    public void setGameState(GameState newState) {
+        if (newState != gameState) {
+            ArrayList<Touche> oldTouches = toucheState.get(gameState);
+            if (oldTouches != null) {
+                setActiveAllTouche(false, oldTouches);
+            }
+            ArrayList<Touche> newTouches = toucheState.get(newState);
+            if (newTouches != null) {
+                setActiveAllTouche(true, newTouches);
+            }
+            gameStateLast = gameState;
+            gameState = newState;
+        }
+    }
+    
+    public int getUpDownMenu() {
+        int tmp = upDownMenu;
+        return tmp;
+    }
+    public void resetUpDownMenu() {
+        upDownMenu = 0;
+    }
+    
 }
+
