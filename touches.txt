@@ -1,3 +1,10 @@
+MENU PRINCIPALE :
+ENTER          : valider
+MAJ (SHIFT)     : monter
+CTRL            : descendre
+
+EN PARTIE :
+
 DEPLACEMENT
 Z               : avancer
 S               : reculer
