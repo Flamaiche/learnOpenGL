@@ -77,12 +77,6 @@ public class Commande {
                 null, null
         ));
 
-        // ESC -> fermer la fenêtre
-        touches.add(new Touche(GLFW.GLFW_KEY_ESCAPE,
-                () -> GLFW.glfwSetWindowShouldClose(window, true),
-                null, null
-        ));
-
         // Espace -> mode orbite tant que pressée
         touches.add(new Touche(GLFW.GLFW_KEY_SPACE,
                 null,                            // pas besoin d’action à l’appui unique
@@ -98,7 +92,7 @@ public class Commande {
         touches.add(new Touche(GLFW.GLFW_KEY_W, null, null, () -> {
             if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getFront()).mul(vitesse));
         }));
-        touches.add(new Touche(GLFW.GLFW_KEY_S, null, null, () -> {
+        touches.add(new Touche(GLFW.GLFW_KEY_S, null,   null, () -> {
             if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getFront()).mul(-vitesse));
         }));
         touches.add(new Touche(GLFW.GLFW_KEY_D, null, null, () -> {
@@ -120,16 +114,34 @@ public class Commande {
         touches.add(new Touche(GLFW.GLFW_KEY_UP, null, null, () -> camera.rotate(0f, vitesseRotation)));
         touches.add(new Touche(GLFW.GLFW_KEY_DOWN, null, null, () -> camera.rotate(0f, -vitesseRotation)));
 
+        touches.add(new Touche(GLFW.GLFW_KEY_ESCAPE, () -> {
+            if (gameState == GameState.PLAYING) {
+                setGameState(GameState.PAUSED);
+            } else if (gameState == GameState.MAIN_MENU) {
+                GLFW.glfwSetWindowShouldClose(window, true);
+            }
+        }, null, null));
+
         // VOIR CANSHOOT()
         addMap(GameState.PLAYING, nbTouches);
         nbTouches = touches.size() - nbTouches;
 
         touches.add(new Touche(GLFW.GLFW_KEY_LEFT_SHIFT, () -> upDownMenu++, null, null));
         touches.add(new Touche(GLFW.GLFW_KEY_LEFT_CONTROL, () -> upDownMenu--, null, null));
-        touches.add(new Touche(GLFW.GLFW_KEY_ENTER, () -> upDownMenu = upDownMenu, null, null));
+        touches.add(new Touche(GLFW.GLFW_KEY_ENTER, () -> {
+            if (gameState == GameState.MAIN_MENU) {
+                setGameState(GameState.PLAYING);
+            }
+        }, null, null));
+
+        // ESC -> fermer la fenêtre
+        touches.add(new Touche(GLFW.GLFW_KEY_ESCAPE,
+                () -> GLFW.glfwSetWindowShouldClose(window, true),
+                null, null));
 
         // VOIR ISSELECTEDMENU()
         addMap(GameState.MAIN_MENU, nbTouches);
+        setActiveAllTouche(false, toucheState.get(GameState.MAIN_MENU));
         nbTouches = touches.size() - nbTouches;
 
     }
@@ -159,7 +171,13 @@ public class Commande {
     }
 
     public boolean pressed(int glfwKey) {
-        for (Touche t : toucheState.get(gameState)) if (t.getKey() == glfwKey) return t.update(window);
+        for (Touche t : toucheState.get(gameState)) {
+            if (t.getKey() == glfwKey && t.isActive()) {
+                // Juste vérifier si la touche est pressée maintenant
+                boolean currentlyPressed = GLFW.glfwGetKey(window, glfwKey) == GLFW.GLFW_PRESS;
+                return currentlyPressed;
+            }
+        }
         return false;
     }
 

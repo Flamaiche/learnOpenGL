@@ -14,23 +14,18 @@ public class Camera {
     private float angleVertical;
     private float fov = 60f;
 
-    // Modes
     private boolean orbitMode = false;
     private boolean commandeRoll = false; // false = FPS, true = cockpit
 
-    // Orbite
     private Vector3f cible = new Vector3f(0,0,0);
     private float orbitTheta = 0f;
     private float orbitPhi = 0f;
     private float orbitRadius = 1f;
 
-    // Distances
     private float renderDistance = 100f;
     private float renderSimulation = 150f;
 
-    // Roll
     private float rollAngle = 0f; // en degrés
-
     private static final float EPSILON = 1e-4f;
 
     public Camera(Vector3f position) {
@@ -56,7 +51,6 @@ public class Camera {
         }
         orbitMode = active;
     }
-
     public boolean isOrbitMode() { return orbitMode; }
 
     public void setCommandeRoll(boolean active) {
@@ -64,20 +58,19 @@ public class Camera {
         rollAngle = 0f; // reset pour éviter un décalage visuel
         updateCameraVectors();
     }
-
     public boolean isCommandeRoll() { return commandeRoll; }
 
     public Matrix4f getViewMatrix() {
         if (orbitMode) alignAxesToTarget();
 
-        Matrix4f view = new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
-
-        // Roll visuel uniquement si FPS classique et roll non nul
-        if (!commandeRoll && Math.abs(rollAngle) > EPSILON) {
-            view.rotate((float)Math.toRadians(rollAngle), front.x, front.y, front.z);
+        if (!commandeRoll) {
+            Vector3f rolledUp = new Vector3f(hautDuMonde);
+            if (Math.abs(rollAngle) > EPSILON)
+                rolledUp.rotateAxis((float)Math.toRadians(rollAngle), front.x, front.y, front.z);
+            return new Matrix4f().lookAt(position, new Vector3f(position).add(front), rolledUp);
+        } else {
+            return new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
         }
-
-        return view;
     }
 
     public void move(Vector3f offset) {
@@ -114,7 +107,6 @@ public class Camera {
         rollAngle += delta;
 
         if (commandeRoll) {
-            // Mode cockpit : roll réel → tourne up et droite
             Matrix4f rotation = new Matrix4f().rotate((float)Math.toRadians(delta), front.x, front.y, front.z);
             rotation.transformDirection(up);
             rotation.transformDirection(droite);
@@ -135,13 +127,11 @@ public class Camera {
         front.normalize();
 
         if (!commandeRoll) {
-            // FPS classique : haut du monde fixe
             droite = new Vector3f(front).cross(hautDuMonde).normalize();
             if (droite.lengthSquared() < 1e-8f)
                 droite = new Vector3f(1,0,0).cross(front).normalize();
             up.set(hautDuMonde);
         } else {
-            // Cockpit : haut et droite tournent avec le roll
             droite = new Vector3f(front).cross(up).normalize();
             up = new Vector3f(droite).cross(front).normalize();
         }
@@ -164,6 +154,7 @@ public class Camera {
         up.set(new Vector3f(droite).cross(front).normalize());
     }
 
+    // --- Getters utiles ---
     public Vector3f getPosition(){ return new Vector3f(position); }
     public Vector3f getFront(){ return new Vector3f(front); }
     public Vector3f getDroite(){ return new Vector3f(droite); }
@@ -171,7 +162,6 @@ public class Camera {
 
     public float getYaw(){ return angleHorizontal; }
     public float getPitch(){ return angleVertical; }
-
     public void setYawPitch(float yawDeg, float pitchDeg){
         angleHorizontal=yawDeg;
         angleVertical=pitchDeg;

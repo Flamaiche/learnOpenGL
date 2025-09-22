@@ -23,7 +23,17 @@ public class Touche {
         if (!active) return false;
         boolean pressed = GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
 
+        if (key == 256) { // GLFW_KEY_ESCAPE = 256
+            System.out.println("=== ESCAPE DEBUG ===");
+            System.out.println("pressed: " + pressed);
+            System.out.println("wasPressed: " + wasPressed);
+            System.out.println("active: " + active);
+            System.out.println("onPressAction != null: " + (onPressAction != null));
+        }
+
         if (pressed) {
+            System.out.println("Touche pressée: " + key + " , wasPressed: " + wasPressed);
+
             if (!wasPressed && onPressAction != null) {
                 onPressAction.run(); // appui unique
                 inAction = true;
@@ -51,4 +61,6 @@ public class Touche {
     public int getKey() { return key; }
     public void setKey(int key) { this.key = key; }
     public void setActive(boolean active) { this.active = active; }
+    public boolean isActive() { return active; }
+    public boolean wasPressed() { return wasPressed; }
 }

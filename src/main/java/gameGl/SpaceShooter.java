@@ -133,6 +133,10 @@ public class SpaceShooter {
         int score = 0;
         int ballsFiredTotal = 0;
         int enemiesKilledTotal = 0;
+        Ennemis enn = new Ennemis(ennemisShader,
+                new float[]{camera.getPosition().x, camera.getPosition().y, camera.getPosition().z},
+                PreVerticesTable.generateCubeSimple(1f), camera);
+        Ennemis.setSpeed(0f); // ennemi de test immobile
 
         Matrix4f orthoProjection = new Matrix4f().ortho2D(-1, 1, -1, 1);
         joueur.cmd.setGameState(GameState.MAIN_MENU);
@@ -140,6 +144,7 @@ public class SpaceShooter {
         // Boucle principale
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            joueur.cmd.update();
 
             double currentTime = glfwGetTime();
             float deltaTime = 0;
@@ -148,13 +153,7 @@ public class SpaceShooter {
 
                 case MAIN_MENU:
                     glClearColor(0f, 0f, 0f, 0f); // fond noir
-
                     //renderMainMenu(textShader);
-
-                    if (joueur.cmd.pressed(GLFW_KEY_ENTER)) {
-                        joueur.cmd.setGameState(GameState.PLAYING);
-                        lastTime = glfwGetTime(); // initialisation correcte du deltaTime
-                    }
                     break;
 
                 case PLAYING:
@@ -189,6 +188,7 @@ public class SpaceShooter {
                     // --- Update / rendu 2D ---
                     Manager2D.updateAll(uiElements, width, height, ennemis, camera);
                     Manager2D.renderAll(uiElements, orthoProjection);
+                    enn.render(viewMatrix, projection); // ennemi de test
 
                     // --- HUD / debug ---
                     int activeBalls = 0;
@@ -215,21 +215,12 @@ public class SpaceShooter {
 
                     hud.update(deltaTime, width, height);
                     hud.render(textShader);
-
-                    // --- Pause ---
-                    if (joueur.cmd.pressed(GLFW_KEY_ESCAPE)) {
-                        joueur.cmd.setGameState(GameState.PAUSED);
-                        pauseStartTime = glfwGetTime();
-                    }
                     break;
 
                 case PAUSED:
                     glClearColor(1f, 1f, 1f, 0f); // fond blanc
-
-
                     lastTime = glfwGetTime(); // on décale lastTime pour éviter un delta énorme
-                        pauseStartTime = 0;
-
+                    pauseStartTime = 0;
                     break;
             }
 
