@@ -83,10 +83,12 @@ public class Commande {
                 () -> camera.setOrbitMode(false), // relâchement -> désactiver orbite
                 () -> camera.setOrbitMode(true)   // tant que pressée -> orbite active
         ));
-
-        // Roll Q/E
-        touches.add(new Touche(GLFW.GLFW_KEY_Q, null, null, () -> camera.addRoll(-rollSpeed)));
-        touches.add(new Touche(GLFW.GLFW_KEY_E, null, null, () -> camera.addRoll(rollSpeed)));
+        Touche alt = new Touche(GLFW.GLFW_KEY_LEFT_ALT, null, null, null);
+        touches.add(alt);
+        // Roll ALT + Q/E/R
+        touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_Q, null, null, () -> camera.addRoll(-rollSpeed)));
+        touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_E, null, null, () -> camera.addRoll(rollSpeed)));
+        touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_R, null, null, () -> camera.setRoll(0)));
 
         // Déplacements WASD + SHIFT/CTRL
         touches.add(new Touche(GLFW.GLFW_KEY_W, null, null, () -> {
@@ -173,9 +175,7 @@ public class Commande {
     public boolean pressed(int glfwKey) {
         for (Touche t : toucheState.get(gameState)) {
             if (t.getKey() == glfwKey && t.isActive()) {
-                // Juste vérifier si la touche est pressée maintenant
-                boolean currentlyPressed = GLFW.glfwGetKey(window, glfwKey) == GLFW.GLFW_PRESS;
-                return currentlyPressed;
+                return t.isPressed(window);
             }
         }
         return false;

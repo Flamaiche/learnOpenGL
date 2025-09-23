@@ -3,12 +3,12 @@ package learnGL.tools;
 import org.lwjgl.glfw.GLFW;
 
 public class Touche {
-    private int key;
-    private Runnable onPressAction;      // exécuté une seule fois au moment de l'appui
-    private Runnable onReleaseAction;    // exécuté une seule fois au relâchement
-    private Runnable onHoldAction;       // exécuté à chaque update tant que la touche est pressée
+    protected int key;
+    protected Runnable onPressAction;      // exécuté une seule fois au moment de l'appui
+    protected Runnable onReleaseAction;    // exécuté une seule fois au relâchement
+    protected Runnable onHoldAction;       // exécuté à chaque update tant que la touche est pressée
 
-    private boolean wasPressed = false;
+    protected boolean wasPressed = false;
     private boolean active = true;
 
     public Touche(int key, Runnable onPressAction, Runnable onReleaseAction, Runnable onHoldAction) {
@@ -23,16 +23,7 @@ public class Touche {
         if (!active) return false;
         boolean pressed = GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
 
-        if (key == 256) { // GLFW_KEY_ESCAPE = 256
-            System.out.println("=== ESCAPE DEBUG ===");
-            System.out.println("pressed: " + pressed);
-            System.out.println("wasPressed: " + wasPressed);
-            System.out.println("active: " + active);
-            System.out.println("onPressAction != null: " + (onPressAction != null));
-        }
-
         if (pressed) {
-            System.out.println("Touche pressée: " + key + " , wasPressed: " + wasPressed);
 
             if (!wasPressed && onPressAction != null) {
                 onPressAction.run(); // appui unique
@@ -53,11 +44,14 @@ public class Touche {
         return inAction;
     }
 
+    public boolean isPressed(long window) {
+        return active && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
+    }
+
     public void reset() {
         wasPressed = false;
     }
 
-    // === Getters / Setters ===
     public int getKey() { return key; }
     public void setKey(int key) { this.key = key; }
     public void setActive(boolean active) { this.active = active; }
