@@ -79,16 +79,17 @@ public class Commande {
 
         // Espace -> mode orbite tant que pressée
         touches.add(new Touche(GLFW.GLFW_KEY_SPACE,
-                null,                            // pas besoin d’action à l’appui unique
+                null,                 // pas besoin d’action à l’appui unique
                 () -> camera.setOrbitMode(false), // relâchement -> désactiver orbite
                 () -> camera.setOrbitMode(true)   // tant que pressée -> orbite active
         ));
         Touche alt = new Touche(GLFW.GLFW_KEY_LEFT_ALT, null, null, null);
         touches.add(alt);
-        // Roll ALT + Q/E/R
+        // Roll ALT + Q/E/R/L
         touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_Q, null, null, () -> camera.addRoll(-rollSpeed)));
         touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_E, null, null, () -> camera.addRoll(rollSpeed)));
         touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_R, null, null, () -> camera.setRoll(0)));
+        touches.add(new ComboTouche(alt, GLFW.GLFW_KEY_L, () -> camera.setRollEnabled(!camera.isRollEnabled()), null,null));
 
         // Déplacements WASD + SHIFT/CTRL
         touches.add(new Touche(GLFW.GLFW_KEY_W, null, null, () -> {
@@ -172,15 +173,6 @@ public class Commande {
         return false;
     }
 
-    public boolean pressed(int glfwKey) {
-        for (Touche t : toucheState.get(gameState)) {
-            if (t.getKey() == glfwKey && t.isActive()) {
-                return t.isPressed(window);
-            }
-        }
-        return false;
-    }
-
     public void setActiveAllTouche(boolean active, ArrayList<Touche> t) {
         for (Touche touche : t) {
             touche.setActive(active);
@@ -206,8 +198,7 @@ public class Commande {
     }
     
     public int getUpDownMenu() {
-        int tmp = upDownMenu;
-        return tmp;
+        return upDownMenu;
     }
     public void resetUpDownMenu() {
         upDownMenu = 0;
