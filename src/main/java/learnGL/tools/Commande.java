@@ -98,10 +98,10 @@ public class Commande {
             if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getFront()).mul(-vitesse));
         }));
         touches.add(new Touche(GLFW.GLFW_KEY_D, null, null, () -> {
-            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getDroite()).mul(vitesse));
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getRight()).mul(vitesse));
         }));
         touches.add(new Touche(GLFW.GLFW_KEY_A, null, null, () -> {
-            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getDroite()).mul(-vitesse));
+            if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getRight()).mul(-vitesse));
         }));
         touches.add(new Touche(GLFW.GLFW_KEY_LEFT_SHIFT, null, null, () -> {
             if (!camera.isOrbitMode()) camera.move(new Vector3f(camera.getUp()).mul(vitesse));
