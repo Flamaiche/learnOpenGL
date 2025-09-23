@@ -18,7 +18,6 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
-import java.io.IOException;
 import java.nio.*;
 import java.util.ArrayList;
 
@@ -113,7 +112,7 @@ public class SpaceShooter {
 
         // Crosshair 2D
         ArrayList<Entity2D> uiElements = new ArrayList<>();
-        uiElements.add(new Crosshair(crosshairShader));
+        uiElements.add(new Crosshair(crosshairShader, camera));
 
         // Balles
         Ball.setMaxDistance(camera.getRenderSimulation());
@@ -187,7 +186,7 @@ public class SpaceShooter {
                     Manager3D.renderAll(ennemis, balls, viewMatrix, projection);
 
                     // --- Update / rendu 2D ---
-                    Manager2D.updateAll(uiElements, width, height, ennemis, camera);
+                    Manager2D.updateAll(uiElements, width, height, ennemis);
                     Manager2D.renderAll(uiElements, orthoProjection);
                     enn.render(viewMatrix, projection); // ennemi de test
 

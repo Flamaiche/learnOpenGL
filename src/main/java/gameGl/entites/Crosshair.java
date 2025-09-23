@@ -12,6 +12,7 @@ public class Crosshair extends Entity2D {
 
     private final Shape shape;
     private final Shader shader;
+    private final Camera camera;
 
     private final Vector3f rayOrigin = new Vector3f();
     private final Vector3f rayDir = new Vector3f();
@@ -24,8 +25,10 @@ public class Crosshair extends Entity2D {
     private final float espaceCentral = 0.02f;      // Espace vide au centre
     private final float epaisseurLigne = 0.005f;    // Épaisseur des lignes
 
-    public Crosshair(Shader shader) {
+    public Crosshair(Shader shader, Camera camera) {
         this.shader = shader;
+        this.camera = camera;
+
 
         // Création initiale du crosshair centré
         float[] verts = createCrosshairPositions(longueurSegment, espaceCentral, epaisseurLigne);
@@ -79,10 +82,13 @@ public class Crosshair extends Entity2D {
         // Correction du ratio pour éviter la déformation
         float scaleX = (float) lastHeight / (float) lastWidth; // ajustement horizontal
         float scaleY = 1.0f;                                   // vertical reste normal
+        float rollRad = (float)Math.toRadians(camera.getRoll()); // angle de roll en radians
+
 
         Matrix4f model = new Matrix4f()
                 .identity()
-                .scale(scaleX, scaleY, 1.0f); // conserve un crosshair carré
+                .scale(scaleX, scaleY, 1.0f) // conserve un crosshair carré
+                .rotateZ(rollRad); // compense le roll de la caméra
 
         shader.setUniformMat4f("model", model);
         shader.setUniformMat4f("view", new Matrix4f().identity());
@@ -119,7 +125,7 @@ public class Crosshair extends Entity2D {
     }
 
     /** Détecte et met en surbrillance l'ennemi le plus proche au centre de l'écran */
-    public void updateHighlightedEnemy(java.util.ArrayList<Ennemis> ennemis, Camera camera) {
+    public void updateHighlightedEnemy(java.util.ArrayList<Ennemis> ennemis) {
         for (Ennemis e : ennemis) e.setHighlighted(false);
 
         Ennemis closest = null;

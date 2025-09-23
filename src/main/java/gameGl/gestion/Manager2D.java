@@ -3,7 +3,6 @@ package gameGl.gestion;
 import gameGl.entites.Crosshair;
 import gameGl.entites.Ennemis;
 import gameGl.entites.Entity2D;
-import learnGL.tools.Camera;
 import org.joml.Matrix4f;
 import java.util.ArrayList;
 
@@ -12,11 +11,11 @@ import java.util.ArrayList;
  */
 public class Manager2D {
 
-    public static void updateAll(ArrayList<? extends Entity2D> entities, int width, int height, ArrayList<Ennemis> ennemis, Camera camera) {
+    public static void updateAll(ArrayList<? extends Entity2D> entities, int width, int height, ArrayList<Ennemis> ennemis) {
         for (Entity2D e : entities) {
             e.update(width, height);
             if (e instanceof Crosshair) {
-                ((Crosshair) e).updateHighlightedEnemy(ennemis, camera); // logique spécifique crosshair
+                ((Crosshair) e).updateHighlightedEnemy(ennemis); // logique spécifique crosshair
             }
         }
     }
