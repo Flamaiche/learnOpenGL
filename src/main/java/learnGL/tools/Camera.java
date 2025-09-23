@@ -15,7 +15,7 @@ public class Camera {
     private float fov = 60f;
 
     private boolean orbitMode = false;
-    private boolean commandeRoll = false; // false = FPS, true = cockpit
+    private boolean rollEnabled = false; // true = roll actif
 
     private Vector3f cible = new Vector3f(0,0,0);
     private float orbitTheta = 0f;
@@ -53,24 +53,21 @@ public class Camera {
     }
     public boolean isOrbitMode() { return orbitMode; }
 
-    public void setCommandeRoll(boolean active) {
-        this.commandeRoll = active;
+    public void setRollEnabled(boolean active) {
+        this.rollEnabled = active;
         rollAngle = 0f; // reset pour éviter un décalage visuel
         updateCameraVectors();
     }
-    public boolean isCommandeRoll() { return commandeRoll; }
+    public boolean isRollEnabled() { return rollEnabled; }
 
     public Matrix4f getViewMatrix() {
         if (orbitMode) alignAxesToTarget();
 
-        if (!commandeRoll) {
-            Vector3f rolledUp = new Vector3f(hautDuMonde);
-            if (Math.abs(rollAngle) > EPSILON)
-                rolledUp.rotateAxis((float)Math.toRadians(rollAngle), front.x, front.y, front.z);
-            return new Matrix4f().lookAt(position, new Vector3f(position).add(front), rolledUp);
-        } else {
-            return new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
-        }
+        Vector3f rolledUp = new Vector3f(up);
+        if (rollEnabled && Math.abs(rollAngle) > EPSILON)
+            rolledUp.rotateAxis((float)Math.toRadians(rollAngle), front.x, front.y, front.z);
+
+        return new Matrix4f().lookAt(position, new Vector3f(position).add(front), rolledUp);
     }
 
     public void move(Vector3f offset) {
@@ -104,15 +101,7 @@ public class Camera {
     }
 
     public void addRoll(float delta) {
-        rollAngle += delta;
-
-        if (commandeRoll) {
-            Matrix4f rotation = new Matrix4f().rotate((float)Math.toRadians(delta), front.x, front.y, front.z);
-            rotation.transformDirection(up);
-            rotation.transformDirection(droite);
-            up.normalize();
-            droite.normalize();
-        }
+        if (rollEnabled) rollAngle += delta;
     }
 
     public float getRoll() { return rollAngle; }
@@ -126,15 +115,10 @@ public class Camera {
         front.z = (float)(Math.sin(yawRad)*Math.cos(pitchRad));
         front.normalize();
 
-        if (!commandeRoll) {
-            droite = new Vector3f(front).cross(hautDuMonde).normalize();
-            if (droite.lengthSquared() < 1e-8f)
-                droite = new Vector3f(1,0,0).cross(front).normalize();
-            up.set(hautDuMonde);
-        } else {
-            droite = new Vector3f(front).cross(up).normalize();
-            up = new Vector3f(droite).cross(front).normalize();
-        }
+        droite = new Vector3f(front).cross(hautDuMonde).normalize();
+        if (droite.lengthSquared() < 1e-8f)
+            droite = new Vector3f(1,0,0).cross(front).normalize();
+        up.set(hautDuMonde);
     }
 
     private void initOrbitFromCurrentState() {
@@ -166,6 +150,12 @@ public class Camera {
         angleHorizontal=yawDeg;
         angleVertical=pitchDeg;
         updateCameraVectors();
+    }
+
+    public void setRoll(float angleDeg) {
+        if (rollEnabled) {
+            this.rollAngle = angleDeg;
+        }
     }
 
     public float distanceTo(Vector3f point){ return position.distance(point); }
