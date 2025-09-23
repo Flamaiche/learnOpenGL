@@ -31,7 +31,7 @@ public class Crosshair extends Entity2D {
 
 
         // Création initiale du crosshair centré
-        float[] verts = createCrosshairPositions(longueurSegment, espaceCentral, epaisseurLigne);
+        float[] verts = createCrosshairRotated(longueurSegment, espaceCentral, epaisseurLigne);
         verts = Shape.autoAddSlotColor(verts); // Ajout des slots pour la couleur RGBA
 
         shape = new Shape(verts);
@@ -39,25 +39,66 @@ public class Crosshair extends Entity2D {
         shape.setShader(shader);
     }
 
-    /** Génère les vertices du réticule en fonction des dimensions données */
-    private static float[] createCrosshairPositions(float len, float gap, float t) {
-        float[] v = new float[24 * 3]; // 4 segments * 6 vertices * 3 coordonnées
+    /** Crosshair avec diagonales réelles inclinées en GL_TRIANGLES */
+    private static float[] createCrosshairRotated(float len, float gap, float t) {
+        float[] v = new float[48 * 3]; // 6 rectangles
         int[] idx = new int[]{0};
 
         float halfT = t * 0.5f;
         float halfGap = gap * 0.5f;
 
-        // Branche gauche
-        putRect(v, idx, -(halfGap + len), -halfT, -halfGap, +halfT);
-        // Branche droite
-        putRect(v, idx, +halfGap, -halfT, +(halfGap + len), +halfT);
-        // Branche bas
-        putRect(v, idx, -halfT, -(halfGap + len), +halfT, -halfGap);
-        // Branche haut
-        putRect(v, idx, -halfT, +halfGap, +halfT, +(halfGap + len));
+        float topY = halfGap + len;
+        float midY = halfGap;
+
+        // Barre verticale centrale |
+        putRect(v, idx, -halfT, midY, +halfT, topY);
+
+        // Diagonale gauche \ (calcul des coins après rotation)
+        addRotatedRect(v, idx, -halfGap, midY, -len - halfGap, topY, halfT);
+
+        // Diagonale droite / (calcul des coins après rotation)
+        addRotatedRect(v, idx, +halfGap, midY, len + halfGap, topY, halfT);
+
+        // Branches classiques
+        putRect(v, idx, -(halfGap + len), -halfT, -halfGap, +halfT); // gauche
+        putRect(v, idx, +halfGap, -halfT, +(halfGap + len), +halfT); // droite
+        putRect(v, idx, -halfT, -(halfGap + len), +halfT, -halfGap); // bas
 
         return v;
     }
+
+    /** Crée un rectangle incliné entre deux points (x1,y1 -> x2,y2) avec épaisseur t */
+    private static void addRotatedRect(float[] v, int[] idx, float x1, float y1, float x2, float y2, float thickness) {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float len = (float)Math.sqrt(dx*dx + dy*dy);
+        float offsetX = -dy / len * thickness / 2f;
+        float offsetY = dx / len * thickness / 2f;
+
+        // Quatre coins
+        float cx1 = x1 + offsetX;
+        float cy1 = y1 + offsetY;
+        float cx2 = x2 + offsetX;
+        float cy2 = y2 + offsetY;
+        float cx3 = x2 - offsetX;
+        float cy3 = y2 - offsetY;
+        float cx4 = x1 - offsetX;
+        float cy4 = y1 - offsetY;
+
+        int i = idx[0];
+        // Deux triangles
+        v[i++] = cx1; v[i++] = cy1; v[i++] = 0f;
+        v[i++] = cx2; v[i++] = cy2; v[i++] = 0f;
+        v[i++] = cx3; v[i++] = cy3; v[i++] = 0f;
+
+        v[i++] = cx1; v[i++] = cy1; v[i++] = 0f;
+        v[i++] = cx3; v[i++] = cy3; v[i++] = 0f;
+        v[i++] = cx4; v[i++] = cy4; v[i++] = 0f;
+
+        idx[0] = i;
+    }
+
+
 
     /** Ajoute un rectangle dans le tableau de vertices */
     private static void putRect(float[] a, int[] idx, float x1, float y1, float x2, float y2) {
@@ -117,7 +158,7 @@ public class Crosshair extends Entity2D {
         float epaisseur = (minDim / 600f) * epaisseurLigne;
 
         // Génération des nouvelles positions
-        float[] newVerts = createCrosshairPositions(longueur, espace, epaisseur);
+        float[] newVerts = createCrosshairRotated(longueur, espace, epaisseur);
         newVerts = Shape.autoAddSlotColor(newVerts);
 
         // Mise à jour dans le VBO via Shape
