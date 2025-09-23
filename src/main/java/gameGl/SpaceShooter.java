@@ -34,7 +34,7 @@ public class SpaceShooter {
     private int width = 800;
     private int height = 600;
 
-    public void run() throws IOException {
+    public void run() {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
         init();
         loop();
@@ -84,7 +84,7 @@ public class SpaceShooter {
         glfwShowWindow(window);
     }
 
-    private void loop() throws IOException {
+    private void loop() {
         GL.createCapabilities();
         glEnable(GL_DEPTH_TEST);
         glClearColor(1f, 1f, 0f, 0f); // fond jaune
@@ -92,6 +92,7 @@ public class SpaceShooter {
 
         // Camera
         Camera camera = new Camera(new Vector3f(0, 0, 3));
+        camera.setRollEnabled(true);
         Commande commande = new Commande(camera, window);
 
         // Shaders
@@ -234,7 +235,7 @@ public class SpaceShooter {
         Text.cleanup();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         new SpaceShooter().run();
     }
 }
